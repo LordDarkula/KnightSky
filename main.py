@@ -20,7 +20,7 @@ Copyright © 2016 Aubhro Sengupta. All rights reserved.
 """
 
 from chess_py import Color, Player, Game
-from chess_py.players.basicAI import Ai
+from KnightSky.depth_search import Ai
 
 
 def main():
