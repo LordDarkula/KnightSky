@@ -1,6 +1,6 @@
 from chess_py.pieces.piece_const import Piece_values
 from chess_py.core.color import Color
-from copy import deepcopy as cp
+from KnightSky.board_copier import copy as cp
 from chess_py.core.algebraic import notation_const
 
 
@@ -20,16 +20,15 @@ class Ai:
         :rtype Move
         """
         position.out()
-        print("Running tree search")
-        if self.is_quiet_position(input_color=self.color, position=position):
-            return position.all_possible_moves(self.color)[int(len(position.all_possible_moves(self.color))/2)]
-        else:
-            move = self.treeSearch(position, 3, self.color)
-            print("Final advantage ", move[1])
-            return move[0]
+        print("Running depth search")
+
+        move = self.depthSearch(position, 3, self.color)
+        print("Final advantage ", move[1])
+        return move[0]
 
     @staticmethod
     def is_quiet_position(input_color, position):
+        print("is quiet")
         for move in position.all_possible_moves(input_color):
             if move.status == notation_const.CAPTURE or \
                     move.status == notation_const.CAPTURE_AND_PROMOTE:
@@ -80,7 +79,7 @@ class Ai:
 #TODO safegard against checkmate
 #TODO build move tree to avoid long wait
 
-    def treeSearch(self, position, depth, color):
+    def depthSearch(self, position, depth, color):
         """
         Returns valid and legal move given position
         :type position: Board
@@ -89,25 +88,28 @@ class Ai:
         :rtype Move
         """
         print("Depth: ", depth)
-        if depth == 1:
+        if depth == 1 or self.is_quiet_position(input_color=color, position=position):
             return self.best_move(position, color)
 
         moves = position.all_possible_moves(color)
-        print("Number of possible moves", len(moves))
+        print("Number of possible moves ", len(moves))
 
         my_move = None
         for move in moves:
+
             move.out()
             test = cp(position)
             test.update(move)
             if len(test.all_possible_moves(color.opponent())) == 0:
                 return move, 100
-            best_reply = self.treeSearch(test, depth=depth-1, color=color.opponent())
+
+            best_reply = self.depthSearch(test, depth=depth - 1, color=color.opponent())
             best_reply[0].out()
             print("My Advantage", -best_reply[1])
             if my_move is None or my_move[1] < -best_reply[1]:
                 my_move = move, -best_reply[1]
 
+            print("New line")
         return my_move
 
     def weed_checkmate(self, moves, position):
@@ -124,11 +126,5 @@ class Ai:
             final.append(moves[0])
 
         return final
-
-    def one_move_ahead(self, move, position):
-        test = cp(position)
-        test.update(move)
-        test.update(self.best_move(test, move.color.opponent()))
-        return test
 
 
