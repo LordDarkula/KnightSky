@@ -1,6 +1,5 @@
 from chess_py.pieces.piece_const import Piece_values
 from chess_py.core.color import Color
-from KnightSky.board_copier import copy as cp
 from chess_py.core.algebraic import notation_const
 
 
@@ -12,6 +11,7 @@ class Ai:
         """
         self.color = input_color
         self.piece_scheme = Piece_values()
+        self.my_moves = []
 
     def generate_move(self, position):
         """
@@ -19,8 +19,10 @@ class Ai:
         :type position: Board
         :rtype Move
         """
-        position.out()
+        print(position)
         print("Running depth search")
+        
+        self.my_moves = position.all_possible_moves(self.color)
 
         move = self.depthSearch(position, 3, self.color)
         print("Final advantage ", move[1])
@@ -28,15 +30,14 @@ class Ai:
 
     @staticmethod
     def is_quiet_position(input_color, position):
-        print("is quiet")
-        for move in position.all_possible_moves(input_color):
+        print("is quiet running")
+        
+        enemy_moves = position.all_possible_moves(input_color.opponent())
+        all_moves = self.my_moves.extend(enemy_moves)
+        
+        for move in all_moves:
             if move.status == notation_const.CAPTURE or \
                     move.status == notation_const.CAPTURE_AND_PROMOTE:
-                return False
-
-        for move in position.all_possible_moves(input_color.opponent()):
-            if move.status == notation_const.CAPTURE or \
-                            move.status == notation_const.CAPTURE_AND_PROMOTE:
                 return False
 
         return True
@@ -44,9 +45,9 @@ class Ai:
     def best_move(self, position, color):
         """
         Finds the best move based on material after the move
-        :type position Board
-        :type color Color
-        :rtype Move
+        :type position: Board
+        :type color: Color
+        :rtype: Move
         """
         moves = position.all_possible_moves(input_color=color)
         my_move = moves[0]
@@ -64,11 +65,11 @@ class Ai:
     def best_reply(self, move, position):
         """
         Finds the best move based on material after the move
-        :type move Move
-        :type position Board
-        :rtype Move
+        :type move: Move
+        :type position: Board
+        :rtype: Move
         """
-        test = cp(position)
+        test = position.cp()
         test.update(move)
         reply = self.best_move(test, move.color.opponent())
         return reply, test.advantage_as_result(reply[0], self.piece_scheme)
