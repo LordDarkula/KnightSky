@@ -7,6 +7,7 @@ class Ai:
     def __init__(self, input_color):
         """
         Creates interface for human player.
+        
         :type input_color: Color
         """
         self.color = input_color
@@ -16,6 +17,7 @@ class Ai:
     def generate_move(self, position):
         """
         Returns valid and legal move given position
+        
         :type position: Board
         :rtype Move
         """
@@ -45,6 +47,7 @@ class Ai:
     def best_move(self, position, color):
         """
         Finds the best move based on material after the move
+        
         :type position: Board
         :type color: Color
         :rtype: Move
@@ -65,6 +68,7 @@ class Ai:
     def best_reply(self, move, position):
         """
         Finds the best move based on material after the move
+        
         :type move: Move
         :type position: Board
         :rtype: Move
@@ -83,10 +87,11 @@ class Ai:
     def depthSearch(self, position, depth, color):
         """
         Returns valid and legal move given position
+        
         :type position: Board
-        :type depth int
-        :type color Color
-        :rtype Move
+        :type depth: int
+        :type color: Color
+        :rtype: Move
         """
         print("Depth: ", depth)
         if depth == 1 or self.is_quiet_position(input_color=color, position=position):
@@ -98,14 +103,14 @@ class Ai:
         my_move = None
         for move in moves:
 
-            move.out()
-            test = cp(position)
+            print(move)
+            test = position.cp()
             test.update(move)
             if len(test.all_possible_moves(color.opponent())) == 0:
                 return move, 100
 
             best_reply = self.depthSearch(test, depth=depth - 1, color=color.opponent())
-            best_reply[0].out()
+            print(best_reply[0])
             print("My Advantage", -best_reply[1])
             if my_move is None or my_move[1] < -best_reply[1]:
                 my_move = move, -best_reply[1]
