@@ -48,16 +48,25 @@ class Ai:
         :type color Color
         :rtype Move
         """
+
         moves = position.all_possible_moves(input_color=color)
+
         my_move = moves[0]
         advantage = position.advantage_as_result(my_move, self.piece_scheme)
 
         for move in moves:
+            test = cp(position)
+            test.update(move)
             # print("In the best move for")
-            if position.advantage_as_result(move, self.piece_scheme) > advantage:
+            pot_advantage = test.material_advantage(move, self.piece_scheme)
+
+            if len(test.all_possible_moves(color.opponent())) == 0:
+                return move, 100
+
+            if pot_advantage > advantage:
 
                 my_move = move
-                advantage = position.advantage_as_result(move, self.piece_scheme)
+                advantage = pot_advantage
 
         return my_move, advantage
 
@@ -88,7 +97,7 @@ class Ai:
         :rtype Move
         """
         print("Depth: ", depth)
-        if depth == 1 or self.is_quiet_position(input_color=color, position=position):
+        if depth == 1 or self.is_quiet_position(color, position):
             return self.best_move(position, color)
 
         moves = position.all_possible_moves(color)
@@ -100,10 +109,14 @@ class Ai:
             move.out()
             test = cp(position)
             test.update(move)
+
+            # Checks for checkmate
             if len(test.all_possible_moves(color.opponent())) == 0:
                 return move, 100
 
+
             best_reply = self.depthSearch(test, depth=depth - 1, color=color.opponent())
+
             best_reply[0].out()
             print("My Advantage", -best_reply[1])
             if my_move is None or my_move[1] < -best_reply[1]:
