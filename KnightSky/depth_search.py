@@ -30,14 +30,17 @@ class Ai:
         print("Final advantage ", move[1])
         return move[0]
 
-    @staticmethod
-    def is_quiet_position(input_color, position):
+    def is_quiet_position(self, input_color, position):
         print("is quiet running")
         
         enemy_moves = position.all_possible_moves(input_color.opponent())
-        all_moves = self.my_moves.extend(enemy_moves)
-        
-        for move in all_moves:
+
+        for move in self.my_moves:
+            if move.status == notation_const.CAPTURE or \
+                    move.status == notation_const.CAPTURE_AND_PROMOTE:
+                return False
+
+        for move in enemy_moves:
             if move.status == notation_const.CAPTURE or \
                     move.status == notation_const.CAPTURE_AND_PROMOTE:
                 return False
@@ -59,7 +62,7 @@ class Ai:
         advantage = position.advantage_as_result(my_move, self.piece_scheme)
 
         for move in moves:
-            test = cp(position)
+            test = position.copy()
             test.update(move)
             # print("In the best move for")
             pot_advantage = test.material_advantage(move, self.piece_scheme)
@@ -135,7 +138,7 @@ class Ai:
         print("weeding 0ut checkmate")
         final = []
         for i in range(len(moves)):
-            test = cp(position)
+            test = position.copy()
             test.update(moves[i])
 
             if not self.best_reply(moves[i], position)[1] == 100:
