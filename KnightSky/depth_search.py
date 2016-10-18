@@ -1,18 +1,20 @@
+import chess_py
 from chess_py.pieces.piece_const import Piece_values
-from chess_py.core.color import Color
+from chess_py import color
 from chess_py.core.algebraic import notation_const
+from chess_py import Player
 
 
-class Ai:
+class Ai(Player):
     def __init__(self, input_color):
         """
         Creates interface for human player.
-        
+
         :type input_color: Color
         """
-        self.color = input_color
         self.piece_scheme = Piece_values()
         self.my_moves = []
+        super(Ai, self).__init__(input_color)
 
     def generate_move(self, position):
         """
@@ -65,7 +67,7 @@ class Ai:
             test = position.copy()
             test.update(move)
             # print("In the best move for")
-            pot_advantage = test.material_advantage(move, self.piece_scheme)
+            pot_advantage = test.material_advantage(move.color, self.piece_scheme)
 
             if len(test.all_possible_moves(color.opponent())) == 0:
                 return move, 100
@@ -85,7 +87,7 @@ class Ai:
         :type position: Board
         :rtype: Move
         """
-        test = position.cp()
+        test = position.copy()
         test.update(move)
         reply = self.best_move(test, move.color.opponent())
         return reply, test.advantage_as_result(reply[0], self.piece_scheme)
@@ -116,7 +118,7 @@ class Ai:
         for move in moves:
 
             print(move)
-            test = position.cp()
+            test = position.copy()
             test.update(move)
 
             # Checks for checkmate
