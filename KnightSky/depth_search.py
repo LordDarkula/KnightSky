@@ -52,10 +52,11 @@ class Ai(Player):
     def best_move(self, position, color):
         """
         Finds the best move based on material after the move
+        in the form Move, advantage (as double).
         
         :type position: Board
         :type color: Color
-        :rtype: Move
+        :rtype: tuple
         """
 
         moves = position.all_possible_moves(input_color=color)
@@ -64,16 +65,12 @@ class Ai(Player):
         advantage = position.advantage_as_result(my_move, self.piece_scheme)
 
         for move in moves:
-            test = position.copy()
-            test.update(move)
-            # print("In the best move for")
-            pot_advantage = test.material_advantage(move.color, self.piece_scheme)
+            pot_advantage = position.advantage_as_result(move, self.piece_scheme)
 
-            if len(test.all_possible_moves(color.opponent())) == 0:
+            if pot_advantage == 100:
                 return move, 100
 
             if pot_advantage > advantage:
-
                 my_move = move
                 advantage = pot_advantage
 
@@ -91,12 +88,6 @@ class Ai(Player):
         test.update(move)
         reply = self.best_move(test, move.color.opponent())
         return reply, test.advantage_as_result(reply[0], self.piece_scheme)
-
-
-
-#TODO if pot_worst is the same as worst decide which move is better for me
-#TODO safegard against checkmate
-#TODO build move tree to avoid long wait
 
     def depthSearch(self, position, depth, color):
         """
@@ -150,5 +141,3 @@ class Ai(Player):
             final.append(moves[0])
 
         return final
-
-
