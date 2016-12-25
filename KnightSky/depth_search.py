@@ -1,8 +1,4 @@
-import chess_py
-from chess_py.pieces.piece_const import Piece_values
-from chess_py import color
-from chess_py.core.algebraic import notation_const
-from chess_py import Player
+from chess_py import *
 
 
 class Ai(Player):
@@ -12,7 +8,7 @@ class Ai(Player):
 
         :type input_color: Color
         """
-        self.piece_scheme = Piece_values()
+        self.piece_scheme = piece_const.Piece_values()
         self.my_moves = []
         super(Ai, self).__init__(input_color)
 
