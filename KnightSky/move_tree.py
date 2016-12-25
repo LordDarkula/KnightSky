@@ -64,15 +64,28 @@ class Tree:
 
         find_tails(self.head)
 
+    def generate_move(self):
+        """
+        Finds best move and updates tree.
+        :return: best move
+        """
+        # TODO find best move and return it
+        # TODO update tree with best move
+        pass
+
     def update(self, response):
         """
         Updates ``Tree`` with opponent's response to my
         previous move so I can start calculating again.
 
         :param response:
-        :return:
         """
-        pass
+        for child in self.head.children:
+            if child.move == response:
+                self.head = child
+                self.reset_tails()
+                self.extend_tree()
+                return
 
 
 class Node:
