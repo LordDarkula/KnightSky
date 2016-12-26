@@ -9,9 +9,10 @@ class Ai(Player):
 
         :type input_color: Color
         """
+        super(Ai, self).__init__(input_color)
         self.piece_scheme = piece_const.Piece_values()
         self.my_moves = []
-        super(Ai, self).__init__(input_color)
+        self.tree = None
 
     def generate_move(self, position):
         """
@@ -22,12 +23,37 @@ class Ai(Player):
         """
         print(position)
         print("Running depth search")
+
+
+        if self.tree is None:
+            self.tree = Tree(position, self.color, 2)
+        else:
+            self.tree.update_from_position(position)
+
+
+
+
+
+
+
+
+
         
         self.my_moves = position.all_possible_moves(self.color)
 
         move = self.depthSearch(position, 3, self.color)
         print("Final advantage ", move[1])
         return move[0]
+
+    def tree_search(self, node, val_scheme):
+        if node is None:
+            raise AttributeError("Node cannot be None")
+        if node.children is None:
+            raise AttributeError("Cannot calculate from tail nodes")
+
+        if node.children.children is None:
+            return self.tree.best_continuation(node, val_scheme)
+
 
     def is_quiet_position(self, input_color, position):
         print("is quiet running")

@@ -111,15 +111,34 @@ class Tree:
         # TODO update tree with best move
         pass
 
-    def update(self, response):
+    @staticmethod
+    def best_continuation(node, val_scheme):
+        board = Board.init_default()
+        board.material_advantage()
+        if len(node.children) == 0:
+            raise Exception("No continuation")
+
+        best_pos = node.children[0]
+        advantage = best_pos.position.material_advantage(node.color, val_scheme)
+        for child in node.children:
+            pot_best = child.position
+            pot_advantage = pot_best.position.material_advantage(node.color, val_scheme)
+
+            if pot_advantage > advantage:
+                advantage = pot_advantage
+                best_pos = pot_best
+
+        return best_pos
+
+    def update_from_position(self, position):
         """
         Updates ``Tree`` with opponent's response to my
         previous move so I can start calculating again.
 
-        :param response:
+        :param position: position when it i my turn
         """
         for child in self.head.children:
-            if child.move == response:
+            if child.position == position:
                 self.head = child
                 self.reset_tails()
                 self.extend_tree()
