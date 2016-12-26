@@ -5,6 +5,7 @@ from chess_py import *
 class Tree:
     def __init__(self, pos, col, depth):
         """
+        Creates tree move tree to store all positions up to a certain depth.
 
         :param pos: Initial position for ``Tree`` to store
         :type: pos: Board
@@ -29,7 +30,7 @@ class Tree:
 
     @property
     def depth(self):
-        return self.depth()
+        return self._depth
 
     @depth.setter
     def depth(self, depth):
