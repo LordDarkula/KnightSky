@@ -1,4 +1,5 @@
 from chess_py import *
+from .move_tree import Tree
 
 
 class Ai(Player):

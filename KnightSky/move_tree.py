@@ -1,3 +1,5 @@
+import warnings
+
 from chess_py import *
 
 class Tree:
@@ -15,15 +17,34 @@ class Tree:
         """
         self.position = pos
         self.color = col
-        self.depth = depth
+        self._depth = depth
 
         self.head = Node(None, pos, col)
         self._build_tree()
         self.tails = [self.head]
 
     def _build_tree(self):
-        for _ in range(self.depth):
+        for _ in range(self._depth):
             self.extend_tree()
+
+    @property
+    def depth(self):
+        return self.depth()
+
+    @depth.setter
+    def depth(self, depth):
+        if depth <= 0:
+            warnings.warn("Tree depth must be greater than 0")
+
+        elif depth > self._depth:
+            while depth > self._depth:
+                self.extend_tree()
+                self._depth += 1
+
+        elif depth < self._depth:
+            while depth < self._depth:
+                self.shrink_tree()
+                self.depth -= 1
 
     def extend_tree(self):
         """
@@ -46,6 +67,22 @@ class Tree:
             node.add_child(child)
 
             self.tails.append(child)
+
+    def shrink_tree(self):
+        """
+        Deletes leaf nodes of ``Tree`` and updates ``self.tails``
+        """
+        self.tails = []
+        def find_tails(node):
+            if node.children.children is None:
+                node.children = None
+                self.tails.append(node)
+                return
+
+            for child in node.children:
+                find_tails(child)
+
+        find_tails(self.head)
 
     def reset_tails(self):
         """
