@@ -114,14 +114,14 @@ class Tree:
     @staticmethod
     def best_continuation(node, val_scheme):
         board = Board.init_default()
-        board.material_advantage()
+        board.material_advantage(node.color, val_scheme)
         if len(node.children) == 0:
             raise Exception("No continuation")
 
         best_pos = node.children[0]
         advantage = best_pos.position.material_advantage(node.color, val_scheme)
         for child in node.children:
-            pot_best = child.position
+            pot_best = child
             pot_advantage = pot_best.position.material_advantage(node.color, val_scheme)
 
             if pot_advantage > advantage:

@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 from chess_py import *
 from .move_tree import Tree
 
@@ -48,11 +50,15 @@ class Ai(Player):
     def tree_search(self, node, val_scheme):
         if node is None:
             raise AttributeError("Node cannot be None")
+
         if node.children is None:
             raise AttributeError("Cannot calculate from tail nodes")
 
         if node.children.children is None:
             return self.tree.best_continuation(node, val_scheme)
+
+        return max(*[child for child in node.children],
+                   key=lambda x: self.tree_search(x, val_scheme).position.material_advantage(node.color, val_scheme))
 
 
     def is_quiet_position(self, input_color, position):
