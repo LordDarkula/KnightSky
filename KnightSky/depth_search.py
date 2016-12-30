@@ -1,5 +1,3 @@
-from operator import attrgetter
-
 from chess_py import *
 from .move_tree import Tree
 
@@ -32,141 +30,35 @@ class Ai(Player):
         else:
             self.tree.update_from_position(position)
 
+        print("Initial", self.tree.depth)
+
+        node = self.tree_search(self.tree.head, piece_const.Piece_values())
 
 
-
-
-
-
-
-
-        
-        self.my_moves = position.all_possible_moves(self.color)
-
-        move = self.depthSearch(position, 3, self.color)
-        print("Final advantage ", move[1])
-        return move[0]
+        print(self.tree.depth)
+        print(node.move)
+        self.tree.update_from_node(node)
+        return node.move
 
     def tree_search(self, node, val_scheme):
+        print("head children", self.tree.head.children)
+        print("node children", node.children)
+        print(len(node.position.all_possible_moves(node.color)))
+        print("depth", self.tree.depth)
         if node is None:
             raise AttributeError("Node cannot be None")
 
-        if node.children is None:
+        if node.children == []:
             raise AttributeError("Cannot calculate from tail nodes")
 
-        if node.children.children is None:
+        # print("hhue", self.tree.head.children[0].children[0].children)
+
+
+
+        if node.children[0].children == []:
             return self.tree.best_continuation(node, val_scheme)
 
-        return max(*[child for child in node.children],
+        print("recurse")
+        return max(*node.children,
                    key=lambda x: self.tree_search(x, val_scheme).position.material_advantage(node.color, val_scheme))
 
-
-    def is_quiet_position(self, input_color, position):
-        print("is quiet running")
-        
-        enemy_moves = position.all_possible_moves(input_color.opponent())
-
-        for move in self.my_moves:
-            if move.status == notation_const.CAPTURE or \
-                    move.status == notation_const.CAPTURE_AND_PROMOTE:
-                return False
-
-        for move in enemy_moves:
-            if move.status == notation_const.CAPTURE or \
-                    move.status == notation_const.CAPTURE_AND_PROMOTE:
-                return False
-
-        return True
-
-    def best_move(self, position, color):
-        """
-        Finds the best move based on material after the move
-        in the form Move, advantage (as double).
-        
-        :type position: Board
-        :type color: Color
-        :rtype: tuple
-        """
-
-        moves = position.all_possible_moves(input_color=color)
-
-        my_move = moves[0]
-        advantage = position.advantage_as_result(my_move, self.piece_scheme)
-
-        for move in moves:
-            pot_advantage = position.advantage_as_result(move, self.piece_scheme)
-
-            if pot_advantage == 100:
-                return move, 100
-
-            if pot_advantage > advantage:
-                my_move = move
-                advantage = pot_advantage
-
-        return my_move, advantage
-
-    def best_reply(self, move, position):
-        """
-        Finds the best move based on material after the move
-        
-        :type move: Move
-        :type position: Board
-        :rtype: Move
-        """
-        test = position.copy()
-        test.update(move)
-        reply = self.best_move(test, move.color.opponent())
-        return reply, test.advantage_as_result(reply[0], self.piece_scheme)
-
-    def depthSearch(self, position, depth, color):
-        """
-        Returns valid and legal move given position
-        
-        :type position: Board
-        :type depth: int
-        :type color: Color
-        :rtype: Move
-        """
-        print("Depth: ", depth)
-        if depth == 1 or self.is_quiet_position(color, position):
-            return self.best_move(position, color)
-
-        moves = position.all_possible_moves(color)
-        print("Number of possible moves ", len(moves))
-
-        my_move = None
-        for move in moves:
-
-            print(move)
-            test = position.copy()
-            test.update(move)
-
-            # Checks for checkmate
-            if len(test.all_possible_moves(color.opponent())) == 0:
-                return move, 100
-
-
-            best_reply = self.depthSearch(test, depth=depth - 1, color=color.opponent())
-
-            print(best_reply[0])
-            print("My Advantage", -best_reply[1])
-            if my_move is None or my_move[1] < -best_reply[1]:
-                my_move = move, -best_reply[1]
-
-            print("New line")
-        return my_move
-
-    def weed_checkmate(self, moves, position):
-        print("weeding 0ut checkmate")
-        final = []
-        for i in range(len(moves)):
-            test = position.copy()
-            test.update(moves[i])
-
-            if not self.best_reply(moves[i], position)[1] == 100:
-                final.append(moves[i])
-
-        if len(final) == 0:
-            final.append(moves[0])
-
-        return final

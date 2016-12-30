@@ -19,14 +19,15 @@ class Tree:
         self.position = pos
         self.color = col
         self._depth = depth
-
         self.head = Node(None, pos, col)
-        self._build_tree()
         self.tails = [self.head]
+        self._build_tree()
 
     def _build_tree(self):
         for _ in range(self._depth):
             self.extend_tree()
+
+        self._depth = int(self._depth / 2)
 
     @property
     def depth(self):
@@ -51,17 +52,20 @@ class Tree:
         """
         Adds one layer to the bottom of the tree
         """
+        print("Extending tree")
         old_tails = self.tails
         self.tails = []
 
         for tail in old_tails:
-            self.add_tails(tail)
+            self._add_tails(tail)
 
-    def add_tails(self, node):
-        tail_moves = node.all_possible_moves(node.color)
+        self._depth += 1
+
+    def _add_tails(self, node):
+        tail_moves = node.position.all_possible_moves(node.color)
 
         for move in tail_moves:
-            position = node.position.cp()
+            position = node.position.copy()
             position.update(move)
 
             child = Node(move, position, node.color.opponent())
@@ -75,8 +79,8 @@ class Tree:
         """
         self.tails = []
         def find_tails(node):
-            if node.children.children is None:
-                node.children = None
+            if node.children[0].children is []:
+                node.children = []
                 self.tails.append(node)
                 return
 
@@ -84,6 +88,8 @@ class Tree:
                 find_tails(child)
 
         find_tails(self.head)
+
+        self._depth -= 1
 
     def reset_tails(self):
         """
@@ -93,7 +99,7 @@ class Tree:
         self.tails = []
 
         def find_tails(node):
-            if node.children is None:
+            if node.children == []:
                 self.tails.append(node)
                 return
 
@@ -135,14 +141,21 @@ class Tree:
         Updates ``Tree`` with opponent's response to my
         previous move so I can start calculating again.
 
-        :param position: position when it i my turn
+        :param position: position when it is my turn
         """
         for child in self.head.children:
             if child.position == position:
-                self.head = child
-                self.reset_tails()
-                self.extend_tree()
+                self.update_from_node(child)
+                print("worked")
                 return
+
+        print("did not work")
+
+    def update_from_node(self, node):
+        self.head = node
+        self.reset_tails()
+        self.extend_tree()
+        self._depth -= 1
 
 
 class Node:
