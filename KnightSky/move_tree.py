@@ -99,7 +99,7 @@ class Tree:
         self.tails = []
 
         def find_tails(node):
-            if node.children == []:
+            if node.is_tail:
                 self.tails.append(node)
                 return
 
@@ -107,15 +107,6 @@ class Tree:
                 find_tails(child)
 
         find_tails(self.head)
-
-    def generate_move(self):
-        """
-        Finds best move and updates tree.
-        :return: best move
-        """
-        # TODO find best move and return it
-        # TODO update tree with best move
-        pass
 
     @staticmethod
     def best_continuation(node, val_scheme):
@@ -164,6 +155,13 @@ class Node:
         self.position = pos
         self.color = col
         self.children = children or []
+
+    def __str__(self):
+        return str(self.move)
+
+    @property
+    def is_tail(self):
+        return len(self.children) == 0
 
     def add_child(self, child):
         self.children.append(child)
