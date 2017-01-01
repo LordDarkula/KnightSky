@@ -51,10 +51,6 @@ class Ai(Player):
         if node.is_tail:
             raise AttributeError("Cannot calculate from tail nodes")
 
-        # print("hhue", self.tree.head.children[0].children[0].children)
-
-
-
         if node.children[0].is_tail:
             return self.tree.best_continuation(node, val_scheme)
 

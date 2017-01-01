@@ -1,2 +1,2 @@
-chess_py == 2.2
-numpy == 1.11.2
+chess_py
+numpy

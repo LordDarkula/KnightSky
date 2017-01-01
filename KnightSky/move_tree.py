@@ -156,6 +156,9 @@ class Node:
         self.color = col
         self.children = children or []
 
+    def __repr__(self):
+        return str(self)
+
     def __str__(self):
         return str(self.move)
 
