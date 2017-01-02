@@ -26,7 +26,7 @@ class Ai(Player):
 
 
         if self.tree is None:
-            self.tree = Tree(position, self.color, 3)
+            self.tree = Tree(position, self.color, 2)
         else:
             self.tree.update_from_position(position)
 

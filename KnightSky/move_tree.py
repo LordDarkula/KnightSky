@@ -1,4 +1,5 @@
 import warnings
+from copy import copy as cp
 
 from chess_py import *
 
@@ -65,7 +66,7 @@ class Tree:
         tail_moves = node.position.all_possible_moves(node.color)
 
         for move in tail_moves:
-            position = node.position.copy()
+            position = cp(node.position)
             position.update(move)
 
             child = Node(move, position, node.color.opponent())
@@ -110,22 +111,10 @@ class Tree:
 
     @staticmethod
     def best_continuation(node, val_scheme):
-        board = Board.init_default()
-        board.material_advantage(node.color, val_scheme)
-        if len(node.children) == 0:
+        if node.is_tail:
             raise Exception("No continuation")
 
-        best_pos = node.children[0]
-        advantage = best_pos.position.material_advantage(node.color, val_scheme)
-        for child in node.children:
-            pot_best = child
-            pot_advantage = pot_best.position.material_advantage(node.color, val_scheme)
-
-            if pot_advantage > advantage:
-                advantage = pot_advantage
-                best_pos = pot_best
-
-        return best_pos
+        return max(*node.children, key=lambda x: x.position.material_advantage(node.color, val_scheme))
 
     def update_from_position(self, position):
         """
