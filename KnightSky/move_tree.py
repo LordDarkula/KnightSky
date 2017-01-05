@@ -34,21 +34,6 @@ class Tree:
     def depth(self):
         return self._depth
 
-    @depth.setter
-    def depth(self, depth):
-        if depth <= 0:
-            warnings.warn("Tree depth must be greater than 0")
-
-        elif depth > self._depth:
-            while depth > self._depth:
-                self.extend_tree()
-                self._depth += 1
-
-        elif depth < self._depth:
-            while depth < self._depth:
-                self.shrink_tree()
-                self.depth -= 1
-
     def extend_tree(self):
         """
         Adds one layer to the bottom of the tree
@@ -63,9 +48,8 @@ class Tree:
         self._depth += 1
 
     def _add_tails(self, node):
-        tail_moves = node.position.all_possible_moves(node.color)
 
-        for move in tail_moves:
+        for move in node.position.all_possible_moves(node.color):
             position = cp(node.position)
             position.update(move)
 
@@ -114,6 +98,9 @@ class Tree:
         if node.is_tail:
             raise Exception("No continuation")
 
+        if len(node.children) == 1:
+            return node.children[0]
+
         return max(*node.children, key=lambda x: x.position.material_advantage(node.color, val_scheme))
 
     def update_from_position(self, position):
@@ -133,9 +120,9 @@ class Tree:
 
     def update_from_node(self, node):
         self.head = node
+        self._depth -= 1
         self.reset_tails()
         self.extend_tree()
-        self._depth -= 1
 
 
 class Node:
@@ -143,7 +130,7 @@ class Node:
         self.move = move
         self.position = pos
         self.color = col
-        self.children = children or []
+        self._children = children or []
 
     def __repr__(self):
         return str(self)
@@ -152,11 +139,15 @@ class Node:
         return str(self.move)
 
     @property
+    def children(self):
+        return self._children
+
+    @property
     def is_tail(self):
-        return len(self.children) == 0
+        return len(self._children) == 0
 
     def add_child(self, child):
-        self.children.append(child)
+        self._children.append(child)
 
     def add_children(self, children):
-        self.children.extend(children)
+        self._children.extend(children)

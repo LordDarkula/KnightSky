@@ -19,7 +19,7 @@ Everything starts here
 Copyright © 2016 Aubhro Sengupta. All rights reserved.
 """
 
-from chess_py import color, Human, Game
+from chess_py import *
 from KnightSky.depth_search import Ai
 
 
