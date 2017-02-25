@@ -1,3 +1,4 @@
+from .timeit import timeit
 from chess_py import *
 from .move_tree import Tree
 
@@ -14,10 +15,14 @@ class Ai(Player):
         self.my_moves = []
         self.tree = None
 
+    def __str__(self):
+        return "Minimax"
+
+    @timeit
     def generate_move(self, position):
         """
         Returns valid and legal move given position
-        
+
         :type position: Board
         :rtype Move
         """
@@ -36,6 +41,7 @@ class Ai(Player):
         self.tree.update_from_node(node)
         return node.move
 
+    @timeit
     def tree_search(self, node, val_scheme):
         if node is None:
             raise AttributeError("Node cannot be None")
@@ -43,15 +49,11 @@ class Ai(Player):
         if node.is_tail:
             raise AttributeError("Cannot calculate from tail nodes")
 
-        if node.children[0].is_tail:
-            print("tail reached")
-            return self.tree.best_continuation(node, val_scheme)
-
-        print("recurse")
-
         if len(node.children) == 1:
             return node.children[0]
 
+        if node.children[0].is_tail:
+            return self.tree.best_continuation(node, val_scheme)
+
         return max(*node.children,
                    key=lambda x: self.tree_search(x, val_scheme).position.material_advantage(node.color, val_scheme))
-

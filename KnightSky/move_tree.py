@@ -1,6 +1,7 @@
 import warnings
 from copy import copy as cp
 
+from .timeit import timeit
 from chess_py import *
 
 class Tree:
@@ -34,6 +35,7 @@ class Tree:
     def depth(self):
         return self._depth
 
+    @timeit
     def extend_tree(self):
         """
         Adds one layer to the bottom of the tree
