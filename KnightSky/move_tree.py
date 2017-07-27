@@ -4,6 +4,7 @@ from copy import copy as cp
 from .timeit import timeit
 from chess_py import *
 
+
 class Tree:
     def __init__(self, pos, col, depth):
         """
@@ -65,6 +66,7 @@ class Tree:
         Deletes leaf nodes of ``Tree`` and updates ``self.tails``
         """
         self.tails = []
+
         def find_tails(node):
             if node.children[0].children is []:
                 node.children = []

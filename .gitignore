@@ -1,5 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
 KnightSky/__pycache__/
 /.idea/
+/venv/
 *.DS_Store
 *.pyc

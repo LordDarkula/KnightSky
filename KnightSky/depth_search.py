@@ -29,7 +29,6 @@ class Ai(Player):
         print(position)
         print("Running depth search")
 
-
         if self.tree is None:
             self.tree = Tree(position, self.color, 3)
         else:
