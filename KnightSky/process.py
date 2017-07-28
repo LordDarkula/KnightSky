@@ -78,6 +78,9 @@ def convert_to_arrays():
                 bitmap_X.append(bitmap(data_board))
                 bitmap_y.append(color_dict[current_color])
 
+            if i >= 3824:
+                break
+
     bitmap_X = np.array(bitmap_X)
     bitmap_y = one_hot(bitmap_y)
 

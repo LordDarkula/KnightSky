@@ -1,5 +1,6 @@
 import time
 
+
 def timeit(method):
 
     def timed(*args, **kw):

@@ -10,10 +10,16 @@ NUMBER_OF_PLAYERS = 2
 
 X_placeholder = tf.placeholder(tf.float32, [None, BOARD_SIZE], name="X")
 y_placeholder = tf.placeholder(tf.float32, [None, NUMBER_OF_PLAYERS], name="y")
+keep_prob_placeholder = tf.placeholder(tf.float32)
 
-LRNING_RATE = 0.00005
+LRNING_RATE = 0.5
+TRAIN_KEEP_PROB = 0.9
+TEST_KEEP_PROB = 1
 
-TENSORBOARD_DIR = "tmp/knight/5"
+BATCH_SIZE = 100
+NUMBER_OF_EPOCHS = 1000
+
+TENSORBOARD_DIR = "tmp/knight/9"
 
 
 def weight_variable(shape):
@@ -29,7 +35,7 @@ def bias_variable(shape):
 def conv_layer(X, W, b, name='conv'):
     with tf.name_scope(name):
         convolution = tf.nn.conv2d(X, W, strides=[1, 1, 1, 1], padding='SAME')
-        activation = tf.nn.relu(convolution + b)
+        activation = convolution + b # tf.nn.relu(convolution + b)
 
         tf.summary.histogram('weights', W)
         tf.summary.histogram('biases', b)
@@ -41,43 +47,41 @@ def conv_layer(X, W, b, name='conv'):
 
 def fc_layer(X, W, b, name='fc'):
     with tf.name_scope(name):
-        return tf.nn.relu(tf.matmul(X, W) + b)
+        activation = tf.nn.relu(tf.matmul(X, W) + b)
+
+        tf.summary.histogram('weights', W)
+        tf.summary.histogram('biases', b)
+        tf.summary.histogram('activation', activation)
+
+        return activation
 
 
 def create_model():
     X = tf.reshape(X_placeholder, [-1, LENGTH, LENGTH, 1])
 
-    W_conv1 = weight_variable([5, 5, 1, 32])
+    W_conv1 = weight_variable([3, 3, 1, 32])
     b_conv1 = bias_variable([32])
 
     model = conv_layer(X, W_conv1, b_conv1, name='conv1')
 
-    W_conv2 = weight_variable([5, 5, 32, 64])
+    W_conv2 = weight_variable([2, 2, 32, 64])
     b_conv2 = bias_variable([64])
 
     model = conv_layer(model, W_conv2, b_conv2, name='conv2')
 
+    model = tf.nn.dropout(model, keep_prob_placeholder)
+
     model = tf.reshape(model, [-1, 2*2*BOARD_SIZE])
 
-    w1 = weight_variable([2*2*BOARD_SIZE, 200])
-    b1 = bias_variable([200])
+    w1 = weight_variable([2*2*BOARD_SIZE, 1024])
+    b1 = bias_variable([1024])
 
     model = fc_layer(model, w1, b1, name='fc1')
 
-    w2 = weight_variable([200, 500])
-    b2 = bias_variable([500])
+    w_out = weight_variable([1024, 2])
+    b_out = bias_variable([2])
 
-    model = fc_layer(model, w2, b2, name='fc2')
-
-    w3 = weight_variable([500, 200])
-    b3 = bias_variable([200])
-
-    model = fc_layer(model, w3, b3, name='fc3')
-
-    w3 = weight_variable([200, NUMBER_OF_PLAYERS])
-    b3 = bias_variable([NUMBER_OF_PLAYERS])
-
-    y_predicted = tf.matmul(model, w3) + b3
+    y_predicted = tf.matmul(model, w_out) + b_out
 
     with tf.name_scope("cross_entropy"):
         cross_entropy = tf.reduce_mean(
@@ -100,7 +104,7 @@ def run_model(optimizer, accuracy, bitmap_X, bitmap_y):
     print("training x {} training y {}".format(len(X_train), len(y_train)))
     print("testing x {} testing y {}".format(len(X_test), len(y_test)))
 
-    with tf.Session() as sess:
+    with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
         print("Session starting")
 
         merged_summary = tf.summary.merge_all()
@@ -109,17 +113,26 @@ def run_model(optimizer, accuracy, bitmap_X, bitmap_y):
 
         sess.run(tf.global_variables_initializer())
 
-        for epoch in range(10000):
+        for epoch in range(NUMBER_OF_EPOCHS):
 
-            for i, (batch_X, batch_y) in enumerate(next_batch(X_train, y_train)):
-                print('batch number: {}'.format(i))
+            for i, (batch_X, batch_y) in enumerate(next_batch(X_train, y_train, batch_size=BATCH_SIZE)):
 
-                sess.run(optimizer, feed_dict={X_placeholder: batch_X, y_placeholder: batch_y})
+                sess.run(optimizer, feed_dict={X_placeholder: batch_X,
+                                               y_placeholder: batch_y,
+                                               keep_prob_placeholder: TRAIN_KEEP_PROB})
 
-                s = sess.run(merged_summary, feed_dict={X_placeholder: batch_X, y_placeholder: batch_y})
+                s = sess.run(merged_summary, feed_dict={X_placeholder: batch_X,
+                                                        y_placeholder: batch_y,
+                                                        keep_prob_placeholder: TRAIN_KEEP_PROB})
                 writer.add_summary(s, i)
 
-            print("Train accuracy {}".format(accuracy.eval({X_placeholder: X_train, y_placeholder: y_train})))
-            print("Test accuracy {}".format(accuracy.eval({X_placeholder: X_test, y_placeholder: y_test})))
+            print("Train accuracy {}".format(accuracy.eval({X_placeholder: X_train,
+                                                            y_placeholder: y_train,
+                                                            keep_prob_placeholder: TRAIN_KEEP_PROB})))
+            print("Test accuracy {}".format(accuracy.eval({X_placeholder: X_test,
+                                                           y_placeholder: y_test,
+                                                           keep_prob_placeholder: TEST_KEEP_PROB})))
 
-        print("Final Test accuracy {}".format(accuracy.eval({X_placeholder: X_test, y_placeholder: y_test})))
+        print("Final Test accuracy {}".format(accuracy.eval({X_placeholder: X_test,
+                                                             y_placeholder: y_test,
+                                                             keep_prob_placeholder: TEST_KEEP_PROB})))

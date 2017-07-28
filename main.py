@@ -38,8 +38,8 @@ def main():
     print("Result is ", result)
 
 if __name__ == "__main__":
-    remove_metadata()
-    x, y = convert_to_arrays()
+    # remove_metadata()
+    # x, y = convert_to_arrays()
 
     bitmap_X = np.load('bitmap_X.npy')
     bitmap_y = np.load('bitmap_y.npy')
