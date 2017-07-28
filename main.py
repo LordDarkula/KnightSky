@@ -18,9 +18,11 @@ Everything starts here
 
 Copyright © 2016 Aubhro Sengupta. All rights reserved.
 """
+import numpy as np
 
 from chess_py import *
 from KnightSky.depth_search import Ai
+from KnightSky.processing.process import convert_to_arrays, remove_metadata
 
 
 def main():
@@ -35,4 +37,12 @@ def main():
     print("Result is ", result)
 
 if __name__ == "__main__":
-    main()
+    # remove_metadata()
+    # x, y = convert_to_arrays()
+    # print(x)
+    # print(y)
+    bitmap_X = np.load('bitmap_X.npy')
+    bitmap_y = np.load('bitmap_y.npy')
+
+    print(bitmap_X[:10])
+    print(bitmap_y[:10])

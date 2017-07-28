@@ -1,2 +1,3 @@
 chess_py
 numpy
+tensorflow

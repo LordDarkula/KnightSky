@@ -4,3 +4,8 @@ KnightSky/__pycache__/
 /venv/
 *.DS_Store
 *.pyc
+ficsgamesdb.pgn
+processed.pgn
+
+bitmap_X.npy
+bitmap_y.npy
