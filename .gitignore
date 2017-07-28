@@ -7,6 +7,3 @@ KnightSky/__pycache__/
 *.pyc
 ficsgamesdb.pgn
 processed.pgn
-
-bitmap_X.npy
-bitmap_y.npy
