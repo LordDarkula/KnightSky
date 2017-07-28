@@ -2,6 +2,7 @@
 KnightSky/__pycache__/
 /.idea/
 /venv/
+/tmp/
 *.DS_Store
 *.pyc
 ficsgamesdb.pgn

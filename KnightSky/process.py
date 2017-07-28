@@ -4,6 +4,7 @@ import os
 import numpy as np
 import re
 import itertools
+import random
 
 from chess_py import *
 from KnightSky.vector import bitmap
@@ -77,11 +78,8 @@ def convert_to_arrays():
                 bitmap_X.append(bitmap(data_board))
                 bitmap_y.append(color_dict[current_color])
 
-            if i > 50:
-                break
-
     bitmap_X = np.array(bitmap_X)
-    bitmap_y = np.array(bitmap_y)
+    bitmap_y = one_hot(bitmap_y)
 
     np.save('bitmap_X', bitmap_X)
     np.save('bitmap_y', bitmap_y)
@@ -89,8 +87,30 @@ def convert_to_arrays():
     return bitmap_X, bitmap_y
 
 
-if __name__ == '__main__':
-    remove_metadata()
-    x, y = convert_to_arrays()
-    print(x)
-    print(y)
+def one_hot(vector):
+    def hot_or_not(i, j):
+        return 1 if i == j else 0
+    return np.array([[int(hot_or_not(i, j)) for j in range(2)] for i in list(vector)])
+
+
+def randomly_assign_train_test(X_data, y_data, test_size=0.1):
+    data = list(zip(list(X_data), list(y_data)))
+    random.shuffle(data)
+
+    shuffled_X, shuffled_y = zip(*data)
+
+    X_split_index = int(len(shuffled_X) * test_size)
+    y_split_index = int(len(shuffled_y) * test_size)
+
+    X_train, X_test = shuffled_X[X_split_index:], shuffled_X[:X_split_index]
+    y_train, y_test = shuffled_y[y_split_index:], shuffled_y[:y_split_index:]
+    return X_train, X_test, y_train, y_test
+
+
+def next_batch(X, y, batch_size=100):
+    n_batches = int(len(X) / batch_size)
+
+    for batch in range(n_batches):
+        start = (batch * batch_size)
+        end = start + batch_size if start + batch_size < len(X) else len(X) - 1
+        yield X[start:end], y[start:end]
