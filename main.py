@@ -24,6 +24,7 @@ from chess_py import *
 from KnightSky.depth_search import Ai
 from KnightSky.process import remove_metadata, convert_to_arrays
 from KnightSky.train_model import create_model, run_model
+from KnightSky.material import material_y
 
 
 def main():
@@ -38,14 +39,22 @@ def main():
     print("Result is ", result)
 
 if __name__ == "__main__":
-    # remove_metadata()
-    # x, y = convert_to_arrays()
-
-    bitmap_X = np.load('bitmap_X.npy')
-    bitmap_y = np.load('bitmap_y.npy')
-
-    print(bitmap_X[:10])
-    print(bitmap_y[:10])
-
-    optimizer, accuracy = create_model()
-    run_model(optimizer, accuracy, bitmap_X, bitmap_y)
+    main()
+    # # remove_metadata()
+    # # x, y = convert_to_arrays()
+    #
+    # bitmap_X = np.load('bitmap_X.npy')
+    # bitmap_y = np.load('bitmap_y.npy')
+    #
+    # print(len(bitmap_X))
+    # print(len(bitmap_y))
+    #
+    # bitmap_X, bitmap_y = material_y(bitmap_X, bitmap_y)
+    #
+    # print(bitmap_X[:10])
+    # print(bitmap_y[:10])
+    #
+    #
+    #
+    # optimizer, accuracy = create_model()
+    # run_model(optimizer, accuracy, bitmap_X, bitmap_y)
