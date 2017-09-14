@@ -10,30 +10,46 @@ from chess_py import *
 from KnightSky.vector import bitmap
 
 
-original_data = "ficsgamesdb.pgn"
-original_path = original_data # os.path.join(os.pardir, os.pardir, original_data)
-print(original_path)
+original_path = os.path.abspath("../data/raw")
+print("raw data in {}".format(original_path))
 
-processed_data = "processed.pgn"
-processed_path = processed_data # os.path.join(os.pardir, os.pardir, processed_data)
+processed_path = os.path.abspath("../data/processed")
+processed_filename = "processed.pgn"
+if not os.path.exists(processed_path):
+    os.makedirs(processed_path)
+print("Processed data to be placed in {}".format(processed_path))
 
-print(processed_path)
+
+def process_files(path):
+    if os.path.isfile(path):
+        print(path)
+        _remove_metadata(path)
+    else:
+        for group in os.listdir(path):
+            process_files(os.path.join(path, group))
 
 
-def remove_metadata():
+def _remove_metadata(path):
 
     forfeit = "forfeits by disconnection"
-    with open(original_path, 'r') as raw, open(processed_path, 'w+') as processed:
+    with open(path, 'r') as raw, \
+            open(os.path.join(processed_path, processed_filename), 'w+') as processed:
         for line in raw:
-            if line[:2] == "1." and forfeit not in line:
+
+            if line[:2] == "1." and forfeit not in line: # Game is there
                 end = line.index('{')
                 processed_line = line[:end].replace('+', '').replace('#', '') + '\n'
                 processed_line = re.sub(r'[1-9][0-9]*\.\s', '', processed_line)
 
-                if '1O-O-O' in processed_line:
-                    print("This is the line " + line)
-                    print("Processed " + processed_line)
-                processed.write(processed_line)
+                result = line[end:]
+                if '1-0' in result:
+                    result = '0'
+                elif '0-1' in result:
+                    result = '1'
+                else:
+                    result = '1/2'
+
+                processed.write("{} {}".format(result, processed_line))
 
 
 def convert_to_arrays():
@@ -117,3 +133,7 @@ def next_batch(X, y, batch_size=100):
         start = (batch * batch_size)
         end = start + batch_size if start + batch_size < len(X) else len(X) - 1
         yield X[start:end], y[start:end]
+
+
+if __name__ == '__main__':
+    process_files(original_path)
