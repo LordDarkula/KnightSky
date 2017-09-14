@@ -19,6 +19,11 @@ if not os.path.exists(processed_path):
     os.makedirs(processed_path)
 print("Processed data to be placed in {}".format(processed_path))
 
+arraypath = os.path.abspath("../data/arrays")
+if not os.path.exists(arraypath):
+    os.makedirs(arraypath)
+print("Arrays to be placed in {}".format(arraypath))
+
 
 def process_files(path):
     if os.path.isfile(path):
@@ -53,12 +58,29 @@ def _remove_metadata(path):
 
 
 def convert_to_arrays():
+    """
+    Converts to two arrays, X and y.
+    X is the list of all chess positions in bitmap form
+    Y is the list of evaluations in the form [good for white, draw, good for black]
+    :return: X and y
+    """
     bitmap_X, bitmap_y = [], []
     color_dict = {color.white: 0, color.black: 1}
-    with open(processed_path, 'r') as processed:
+    with open(os.path.join(processed_path, processed_filename), 'r') as processed:
+
         for i, line in enumerate(processed):
+
             print("On game number {}".format(i))
-            move_list = line.split(' ')
+            if line[0:3] == "1/2": # Game is drawn
+                result = 0.5
+                game_str = line[4:]
+            else:
+                result = int(line[0:1])
+                game_str = line[2:]
+            print("Result of the game was {}".format(result))
+
+            move_list = game_str.split(' ')
+            print(move_list)
             data_board = Board.init_default()
             color_itr = itertools.cycle([color.white, color.black])
 
@@ -69,47 +91,57 @@ def convert_to_arrays():
                 print(color_dict[current_color])
 
                 try:
-
                     move = converter.incomplete_alg(move_str, current_color)
-
                 except AttributeError as error:
                     print(error)
                     break
-
                 if move is None:
+                    print("Broken in incomplete alg")
                     break
 
                 try:
                     move = converter.make_legal(move, data_board)
-
                 except AttributeError as error:
                     print(error)
                     break
-
                 if move is None:
+                    print("Broken in make lega alg")
                     break
 
                 data_board.update(move)
 
                 bitmap_X.append(bitmap(data_board))
-                bitmap_y.append(color_dict[current_color])
+                if color_dict[current_color] == result: # This player won the game
+                    if current_color == color.white:
+                        bitmap_y.append([1, 0, 0])
+                    else:
+                        bitmap_y.append([0, 0, 1])
+
+                elif color_dict[current_color] == result: # This player lost the game
+                    if current_color == color.white:
+                        bitmap_y.append([0, 0, 1])
+                    else:
+                        bitmap_y.append([1, 0, 0])
+                else: # Game was drawn
+                    bitmap_y.append([0, 1, 0])
 
             if i >= 3824:
                 break
 
     bitmap_X = np.array(bitmap_X)
-    bitmap_y = one_hot(bitmap_y)
+    bitmap_y = np.array(bitmap_y)
+    xpath = os.path.join(arraypath, 'bitmap_X')
+    ypath = os.path.join(arraypath, 'bitmap_y')
 
-    np.save('bitmap_X', bitmap_X)
-    np.save('bitmap_y', bitmap_y)
+    if os.path.exists(xpath):
+        os.remove(xpath)
+    if os.path.exists(ypath):
+        os.remove(ypath)
+
+    np.save(os.path.join(arraypath, 'bitmap_X'), bitmap_X)
+    np.save(os.path.join(arraypath, 'bitmap_y'), bitmap_y)
 
     return bitmap_X, bitmap_y
-
-
-def one_hot(vector):
-    def hot_or_not(i, j):
-        return 1 if i == j else 0
-    return np.array([[int(hot_or_not(i, j)) for j in range(2)] for i in list(vector)])
 
 
 def randomly_assign_train_test(X_data, y_data, test_size=0.1):
@@ -137,3 +169,4 @@ def next_batch(X, y, batch_size=100):
 
 if __name__ == '__main__':
     process_files(original_path)
+    convert_to_arrays()
