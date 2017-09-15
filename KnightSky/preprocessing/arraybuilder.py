@@ -4,11 +4,10 @@ import os
 import numpy as np
 import re
 import itertools
-import random
 from chess_py import *
 
 from KnightSky.helpers import oshelper
-from KnightSky.vector import bitmap
+from KnightSky.helpers.featurehelper import bitmap
 
 
 """ Defines paths to raw data, processed data, and numpy arrays.
