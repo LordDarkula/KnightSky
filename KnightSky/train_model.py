@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import tensorflow as tf
 
-from KnightSky.process import randomly_assign_train_test, next_batch
+from KnightSky.preprocessing.split import randomly_assign_train_test, next_batch
 
 
 BOARD_SIZE = 64
