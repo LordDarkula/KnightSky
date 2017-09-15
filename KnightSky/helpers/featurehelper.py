@@ -1,6 +1,6 @@
 import numpy as np
 
-from chess_py import Board, color
+from chess_py import color
 from chess_py.pieces.piece_const import Piece_values
 
 
