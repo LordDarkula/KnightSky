@@ -21,10 +21,10 @@ Copyright © 2016 Aubhro Sengupta. All rights reserved.
 import numpy as np
 from chess_py import *
 
-from KnightSky.depth_search import Ai
-from KnightSky.process import remove_metadata, convert_to_arrays
-from KnightSky.train_model import create_model, run_model
-from KnightSky.material import material_y
+from KnightSky.models.depth_search import Ai
+from KnightSky.preprocessing.arraybuilder import process_files, convert_to_arrays
+from KnightSky.models.train_model import create_model, run_model
+from KnightSky.helpers.featurehelper import material_y
 
 
 def main():

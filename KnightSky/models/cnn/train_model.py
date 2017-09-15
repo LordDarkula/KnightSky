@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
 import tensorflow as tf
 
 from KnightSky.preprocessing.split import randomly_assign_train_test, next_batch

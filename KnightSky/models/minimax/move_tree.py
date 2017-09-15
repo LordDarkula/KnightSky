@@ -1,7 +1,7 @@
 import warnings
 from copy import copy as cp
 
-from .timeit import timeit
+from KnightSky.helpers.timeit import timeit
 from chess_py import *
 
 

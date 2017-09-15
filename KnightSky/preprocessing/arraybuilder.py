@@ -55,7 +55,7 @@ def _remove_metadata(path):
                 else:
                     result = '1/2'
 
-                processed.write("{} {}".format(result, processed_line))
+                processed.write("{result} {movesequence}".format(result=result, movesequence=processed_line))
 
 
 def convert_to_arrays():

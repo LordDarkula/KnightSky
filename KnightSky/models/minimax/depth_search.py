@@ -1,4 +1,4 @@
-from .timeit import timeit
+from KnightSky.helpers.timeit import timeit
 from chess_py import *
 from .move_tree import Tree
 
