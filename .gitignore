@@ -1,9 +1,9 @@
 # Created by .ignore support plugin (hsz.mobi)
-KnightSky/__pycache__/
+__pycache__/
 .idea/
-/venv/
-/tmp/
-/data/
+venv/
+tmp/
+data/
 
 *.icloud
 *.DS_Store
