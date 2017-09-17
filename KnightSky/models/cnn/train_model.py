@@ -2,6 +2,7 @@
 
 import tensorflow as tf
 
+from KnightSky.helpers import tensorboardsetup
 from KnightSky.preprocessing.split import randomly_assign_train_test, next_batch
 
 
@@ -20,7 +21,7 @@ TEST_KEEP_PROB = 1
 BATCH_SIZE = 100
 NUMBER_OF_EPOCHS = 300
 
-TENSORBOARD_DIR = "tmp/final/3"
+TENSORBOARD_DIR = tensorboardsetup.current_run_directory()
 
 
 def weight_variable(shape):

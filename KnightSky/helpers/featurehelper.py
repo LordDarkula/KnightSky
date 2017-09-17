@@ -1,10 +1,15 @@
+# -*- coding: utf-8 -*-
+
+"""
+Helpers to make constructing features and labels easier.
+"""
 import numpy as np
 
 from chess_py import color
 from chess_py.pieces.piece_const import Piece_values
 
 
-def bitmap(board):
+def features(board):
     """
     Converts board to 1D numpy array consisting of
     piece values.

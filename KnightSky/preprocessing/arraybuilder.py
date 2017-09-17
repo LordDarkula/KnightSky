@@ -7,7 +7,7 @@ import itertools
 from chess_py import *
 
 from KnightSky.helpers import oshelper
-from KnightSky.helpers.featurehelper import bitmap
+from KnightSky.helpers.featurehelper import features
 
 
 DATA_PATH = oshelper.abspath(os.path.join(os.pardir, os.pardir, "data"))
@@ -63,7 +63,7 @@ def _remove_metadata(path):
 def convert_to_arrays():
     """
     Converts to two arrays, X and y.
-    X is the list of all chess positions in bitmap form
+    X is the list of all chess positions in feature_list form
     Y is the list of evaluations in the form [good for white, draw, good for black]
     :return: X and y
     """
@@ -113,7 +113,7 @@ def convert_to_arrays():
 
                 data_board.update(move)
 
-                bitmap_X.append(bitmap(data_board))
+                bitmap_X.append(features(data_board))
                 if color_dict[current_color] == result: # This player won the game
                     if current_color == color.white:
                         bitmap_y.append([1, 0, 0])
