@@ -10,20 +10,22 @@ from KnightSky.helpers import oshelper
 from KnightSky.helpers.featurehelper import bitmap
 
 
+DATA_PATH = oshelper.abspath(os.path.join(os.pardir, os.pardir, "data"))
+
 """ Defines paths to raw data, processed data, and numpy arrays.
 Creates directories if they do not exist. """
-oshelper.create_if_not_exists("../data")
+oshelper.create_if_not_exists(DATA_PATH)
 
-original_path = oshelper.abspath("../data/raw")
-print("raw data in {}".format(original_path))
+RAW_PATH = oshelper.pathjoin(DATA_PATH, "raw")
+print("raw data in {}".format(RAW_PATH))
 
-processed_path = os.path.abspath("../data/processed/processed.pgn")
-oshelper.create_if_not_exists(processed_path)
-print("Processed data to be placed in {}".format(processed_path))
+PROCESSED_PATH = oshelper.pathjoin(DATA_PATH, "processed", "processed.pgn")
+oshelper.create_if_not_exists(PROCESSED_PATH)
+print("Processed data to be placed in {}".format(PROCESSED_PATH))
 
-arraypath = os.path.abspath("../data/arrays")
-oshelper.create_if_not_exists(arraypath)
-print("Arrays to be placed in {}".format(arraypath))
+ARRAY_PATH = oshelper.pathjoin(DATA_PATH, "arrays")
+oshelper.create_if_not_exists(ARRAY_PATH)
+print("Arrays to be placed in {}".format(ARRAY_PATH))
 
 
 def process_files(path):
@@ -39,7 +41,7 @@ def _remove_metadata(path):
 
     forfeit = "forfeits by disconnection"
     with open(path, 'r') as raw, \
-            open(processed_path, 'w+') as processed:
+            open(PROCESSED_PATH, 'w+') as processed:
         for line in raw:
 
             if line[:2] == "1." and forfeit not in line: # Game is there
@@ -67,15 +69,15 @@ def convert_to_arrays():
     """
     bitmap_X, bitmap_y = [], []
     color_dict = {color.white: 0, color.black: 1}
-    with open(processed_path, 'r') as processed:
+    with open(PROCESSED_PATH, 'r') as processed:
 
         for i, line in enumerate(processed):
 
             print("On game number {}".format(i))
-            if line[0:3] == "1/2": # Game is drawn
+            if line[0:3] == "1/2":  # Game is drawn
                 result = 0.5
                 game_str = line[4:]
-            else:
+            else:                   # Victor exists
                 result = int(line[0:1])
                 game_str = line[2:]
             print("Result of the game was {}".format(result))
@@ -132,12 +134,12 @@ def convert_to_arrays():
     bitmap_X = np.array(bitmap_X)
     bitmap_y = np.array(bitmap_y)
 
-    np.save(oshelper.pathjoin(arraypath, 'bitmap_X'), bitmap_X)
-    np.save(oshelper.pathjoin(arraypath, 'bitmap_y'), bitmap_y)
+    np.save(oshelper.pathjoin(ARRAY_PATH, 'bitmap_X'), bitmap_X)
+    np.save(oshelper.pathjoin(ARRAY_PATH, 'bitmap_y'), bitmap_y)
 
     return bitmap_X, bitmap_y
 
 
 if __name__ == '__main__':
-    process_files(original_path)
+    process_files(RAW_PATH)
     convert_to_arrays()

@@ -8,19 +8,25 @@ import os
 
 def create_if_not_exists(path):
     """ Creates directory or file if it does not exist. """
+    path = os.path.normpath(abspath(path))
     if not os.path.exists(path):
-        path = abspath(path)
-        if os.path.isdir(path):
-            os.makedirs(path)
-        elif os.path.isfile(path):
+        print("This is it " + path)
+        if '.' in path:  # Path refers to a file
+            print("path is not dir")
             os.makedirs(os.path.dirname(path))
-            open(path, 'r').close()
+            open(path, 'w').close()
+        else:
+            print("path is dir")
+            os.makedirs(path)
 
 
 """ Aliases """
+
+
 def abspath(path):
     """ Copy of ``os.path.abspath`` to make the function name shorter. """
     return os.path.abspath(path)
+
 
 def pathjoin(*path):
     """ Copy of ``os.path.join`` to make the function name shorter. """
