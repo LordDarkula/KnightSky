@@ -1,15 +1,23 @@
+# -*- coding: utf-8 -*-
+"""
+Script meant to automate the naming of individual tensorboard runs.
+Calling ``current_run_directory()`` will create the necessary directories if they do not exist,
+increment the run count, and return the path to the current tensorboard run.
+"""
+
 import os
 from KnightSky.helpers import oshelper
 
 
-def current_run_directory():
+def current_run_directory(run_name='knight'):
     """
     Sets correct tensorboard directory dynamically based on number of runs.
     Delete tensorboard directory to start count over
     """
     tbdir = _construct_tb_path()
-    count = _incr_tb_run_number(tbdir)
-    return oshelper.pathjoin(tbdir, "knight", count)
+    count = _incr_tb_run_number(tbdir, run_name)
+    oshelper.create_if_not_exists(oshelper.pathjoin(tbdir, run_name))
+    return oshelper.pathjoin(tbdir, run_name, count)
 
 
 def _construct_tb_path():
@@ -18,22 +26,23 @@ def _construct_tb_path():
     tbpath = oshelper.pathjoin(*tbpathlist)
     tbpath = oshelper.pathjoin(tbpath, "tensorboard")
     tbpath = oshelper.abspath(tbpath)
+    oshelper.create_if_not_exists(tbpath)
     return tbpath
 
 
-def _incr_tb_run_number(tbpath):
+def _incr_tb_run_number(tbpath, run_name):
     """
     Increments tensorboard count by 1 for the new run. If no runs are present, create the directory itself.
     :param tbpath: path of tensorboard
     :return: The number of runs plus 1 for use as the name of the new run
     """
-    filename = "count.txt"
+    filename = run_name + '.txt'
     run_number_path = oshelper.pathjoin(tbpath, filename)
     if not os.path.exists(run_number_path):
-        os.makedirs(tbpath)
-        f = open(run_number_path, 'w')
-        f.write('1')
-        f.close()
+
+        with open(run_number_path, 'w') as f:
+            f.write('1')
+
         return '1'
 
     else:
@@ -44,6 +53,3 @@ def _incr_tb_run_number(tbpath):
             f.write(str(current + 1))
 
         return str(current + 1)
-
-
-

@@ -7,7 +7,7 @@ import itertools
 from chess_py import *
 
 from KnightSky.helpers import oshelper
-from KnightSky.helpers.featurehelper import features
+from KnightSky.preprocessing.helpers.featurehelper import features
 
 
 DATA_PATH = oshelper.abspath(os.path.join(os.pardir, os.pardir, "data"))
