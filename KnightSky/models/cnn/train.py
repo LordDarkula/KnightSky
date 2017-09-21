@@ -13,10 +13,10 @@ from KnightSky.preprocessing.split import randomly_assign_train_test, next_batch
 
 BOARD_SIZE = 64
 LENGTH = 8
-NUMBER_OF_PLAYERS = 2
+NUMBER_OF_CLASSES = 3
 
 X_placeholder = tf.placeholder(tf.float32, [None, BOARD_SIZE], name="X")
-y_placeholder = tf.placeholder(tf.float32, [None, NUMBER_OF_PLAYERS], name="y")
+y_placeholder = tf.placeholder(tf.float32, [None, NUMBER_OF_CLASSES], name="y")
 keep_prob_placeholder = tf.placeholder(tf.float32)
 
 LRNING_RATE = 0.005
