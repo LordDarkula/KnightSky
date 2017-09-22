@@ -9,7 +9,7 @@ from chess_py import color
 from chess_py.pieces.piece_const import Piece_values
 
 
-def features(board):
+def extract_features(board):
     """
     Converts board to 1D numpy array consisting of
     piece values.
