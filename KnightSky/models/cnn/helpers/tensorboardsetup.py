@@ -9,12 +9,12 @@ import os
 from KnightSky.helpers import oshelper
 
 
-def current_run_directory(path_to_temp, run_name='knight'):
+def current_run_directory(tmp_path, run_name='knight'):
     """
     Sets correct tensorboard directory dynamically based on number of runs.
     Delete tensorboard directory to start count over
     """
-    runpath = oshelper.pathjoin(path_to_temp, run_name)
+    runpath = oshelper.pathjoin(tmp_path, run_name)
     oshelper.create_if_not_exists(runpath)
     count = _incr_tb_run_number(runpath)
     return oshelper.pathjoin(runpath, count)

@@ -20,15 +20,19 @@ Copyright © 2016 Aubhro Sengupta. All rights reserved.
 """
 
 import os
+from chess_py import *
 
 from KnightSky.preprocessing.arraybuilder import ArrayBuilder
-from KnightSky.models.cnn.helpers import tensorboardsetup
+from KnightSky.models.cnn.train import BoardEvaluator
 
 
 if __name__ == "__main__":
     # proc = ArrayBuilder(os.path.join(os.getcwd(), 'data'))
     # proc.process_files()
     # proc.convert_to_arrays()
-    print(tensorboardsetup.current_run_directory(os.path.join(os.path.abspath(os.getcwd()), 'tmp')))
+    model = BoardEvaluator(os.path.abspath(os.path.join(os.getcwd(), 'tmp')))
+    model.train_on(os.path.abspath(os.path.join(os.getcwd(), 'data')))
+
+
 
 

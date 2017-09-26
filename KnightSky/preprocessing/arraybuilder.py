@@ -10,7 +10,6 @@ from KnightSky.helpers import oshelper
 from KnightSky.preprocessing.helpers.featurehelper import extract_features
 
 
-
 class ArrayBuilder:
     def __init__(self, datapath):
         """
@@ -23,12 +22,10 @@ class ArrayBuilder:
         if not os.path.exists(datapath):
             raise FileNotFoundError("create /data/raw and put data in there")
 
-        self.paths_dict = {
-            'data': datapath,
-            'raw': oshelper.pathjoin(datapath, "raw"),
-            'processed': oshelper.pathjoin(datapath, "processed", "processed.pgn"),
-            'arrays': oshelper.pathjoin(datapath, "arrays")
-        }
+        self.paths_dict = {'data': datapath,
+                           'raw': oshelper.pathjoin(datapath, "raw"),
+                           'processed': oshelper.pathjoin(datapath, "processed", "processed.pgn"),
+                           'arrays': oshelper.pathjoin(datapath, "arrays")}
 
         oshelper.create_if_not_exists(self.paths_dict['processed'])
         oshelper.create_if_not_exists(self.paths_dict['raw'])
@@ -41,21 +38,19 @@ class ArrayBuilder:
         def process_level(path):
             if os.path.isfile(path):
                 self._remove_metadata(path)
-            else:
 
+            else:
                 for group in os.listdir(path):
                     process_level(os.path.join(path, group))
 
         process_level(self.paths_dict['raw'])
 
-
     def _remove_metadata(self, rawpath):
-
         forfeit = "forfeits by disconnection"
         with open(rawpath, 'r') as raw, \
                 open(self.paths_dict['processed'], 'w+') as processed:
-            for line in raw:
 
+            for line in raw:
                 if line[:2] == "1." and forfeit not in line: # Game is there
                     end = line.index('{')
                     processed_line = line[:end].replace('+', '').replace('#', '') + '\n'
@@ -71,7 +66,6 @@ class ArrayBuilder:
 
                     processed.write("{result} {movesequence}".format(result=result, movesequence=processed_line))
 
-
     def convert_to_arrays(self):
         """
         Converts to two arrays, X and y.
@@ -81,10 +75,9 @@ class ArrayBuilder:
         """
         features, labels = [], []
         color_dict = {color.white: 0, color.black: 1}
+
         with open(self.paths_dict['processed'], 'r') as processed:
-
             for i, line in enumerate(processed):
-
                 print("On game number {}".format(i))
                 if line[0:3] == "1/2":  # Game is drawn
                     result = 0.5
@@ -137,7 +130,7 @@ class ArrayBuilder:
                             labels.append([0, 0, 1])
                         else:
                             labels.append([1, 0, 0])
-                    else: # Game was drawn
+                    else:  # Game was drawn
                         labels.append([0, 1, 0])
 
                 if i >= 3824:

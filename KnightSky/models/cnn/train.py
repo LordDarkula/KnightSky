@@ -4,108 +4,146 @@
 Constructs convolutional neural network
 """
 
+import numpy as np
 import tensorflow as tf
 
+from KnightSky.helpers import oshelper
 from KnightSky.models.cnn.helpers import tensorboardsetup
 from KnightSky.models.cnn.helpers.layers import conv_layer, fc_layer
 from KnightSky.models.cnn.helpers.variables import weight_variable, bias_variable
 from KnightSky.preprocessing.split import randomly_assign_train_test, next_batch
 
-BOARD_SIZE = 64
-LENGTH = 8
-NUMBER_OF_CLASSES = 3
 
-X_placeholder = tf.placeholder(tf.float32, [None, BOARD_SIZE], name="X")
-y_placeholder = tf.placeholder(tf.float32, [None, NUMBER_OF_CLASSES], name="y")
-keep_prob_placeholder = tf.placeholder(tf.float32)
+class BoardEvaluator:
+    """
+    Wrapper class for this tensorflow model. Creates computational graph
+    """
+    BOARD_SIZE = 64
+    LENGTH = 8
+    NUMBER_OF_CLASSES = 3
 
-LRNING_RATE = 0.005
-TRAIN_KEEP_PROB = 0.9
-TEST_KEEP_PROB = 1
+    def __init__(self, tmp_path):
+        # Tensorboard Setup
+        self.tmp_path = tmp_path
+        oshelper.create_if_not_exists(tmp_path)
+        self.tb_dir = tensorboardsetup.current_run_directory(tmp_path)
 
-BATCH_SIZE = 100
-NUMBER_OF_EPOCHS = 300
+        # Placholder initialization
+        self.X_placeholder = tf.placeholder(tf.float32, [None, self.BOARD_SIZE], name="X")
+        self.y_placeholder = tf.placeholder(tf.float32, [None, self.NUMBER_OF_CLASSES], name="y")
+        self.keep_prob_placeholder = tf.placeholder(tf.float32)
+        self.learning_rate = tf.placeholder(tf.float32)
 
-TENSORBOARD_DIR = tensorboardsetup.current_run_directory()
+        # Model creation
+        self.optimizer = None
+        self.evaluate = None
+        self.accuracy = None
+        self._create_model()
 
+    def _create_model(self):
+        X = tf.reshape(self.X_placeholder, [-1, self.LENGTH, self.LENGTH, 1])
 
-def create_model():
-    X = tf.reshape(X_placeholder, [-1, LENGTH, LENGTH, 1])
+        W_conv1 = weight_variable([6, 6, 1, 32])
+        b_conv1 = bias_variable([32])
 
-    W_conv1 = weight_variable([6, 6, 1, 32])
-    b_conv1 = bias_variable([32])
+        model = conv_layer(X, W_conv1, b_conv1, name='conv1')
 
-    model = conv_layer(X, W_conv1, b_conv1, name='conv1')
+        W_conv2 = weight_variable([2, 2, 32, 64])
+        b_conv2 = bias_variable([64])
 
-    W_conv2 = weight_variable([2, 2, 32, 64])
-    b_conv2 = bias_variable([64])
+        model = conv_layer(model, W_conv2, b_conv2, name='conv2')
 
-    model = conv_layer(model, W_conv2, b_conv2, name='conv2')
+        model = tf.reshape(model, [-1, 2*2*self.BOARD_SIZE])
 
-    model = tf.reshape(model, [-1, 2*2*BOARD_SIZE])
+        w1 = weight_variable([2*2*self.BOARD_SIZE, 1024])
+        b1 = bias_variable([1024])
 
-    w1 = weight_variable([2*2*BOARD_SIZE, 1024])
-    b1 = bias_variable([1024])
+        model = fc_layer(model, w1, b1, name='fc1')
 
-    model = fc_layer(model, w1, b1, name='fc1')
+        model = tf.nn.dropout(model, self.keep_prob_placeholder)
 
-    model = tf.nn.dropout(model, keep_prob_placeholder)
+        w_out = weight_variable([1024, 3])
+        b_out = bias_variable([3])
 
-    w_out = weight_variable([1024, 2])
-    b_out = bias_variable([2])
+        y_predicted = tf.matmul(model, w_out) + b_out
 
-    y_predicted = tf.matmul(model, w_out) + b_out
+        with tf.name_scope("cross_entropy"):
+            cross_entropy = tf.reduce_mean(
+                tf.nn.softmax_cross_entropy_with_logits(labels=self.y_placeholder, logits=y_predicted))
+            tf.summary.scalar('cross_entropy', cross_entropy)
 
-    with tf.name_scope("cross_entropy"):
-        cross_entropy = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(labels=y_placeholder, logits=y_predicted))
-        tf.summary.scalar('cross_entropy', cross_entropy)
+        with tf.name_scope("train"):
+            self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(cross_entropy)
 
-    with tf.name_scope("train"):
-        optimizer = tf.train.AdamOptimizer(LRNING_RATE).minimize(cross_entropy)
+        self.evaluate = tf.argmax(y_predicted, 1)
 
-    with tf.name_scope("accuracy"):
-        correct_prediction = tf.equal(tf.argmax(y_predicted, 1), tf.argmax(y_placeholder, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-        tf.summary.scalar("accuracy", accuracy)
+        with tf.name_scope("accuracy"):
+            correct_prediction = tf.equal(tf.argmax(y_predicted, 1), tf.argmax(self.y_placeholder, 1))
+            self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+            tf.summary.scalar("accuracy", self.accuracy)
 
-    return optimizer, accuracy
+    def train_on(self, data_or_path,
+                 array_folder_name='arrays',
+                 epochs=300,
+                 batch_size=100,
+                 learning_rate=0.05,
+                 train_keep_prob=0.5,
+                 test_keep_prob=1.0):
+        """
+        Trains on data in the form of a tuple of np arrays stored as (X, y),
+        or the path to a folder containing 2 npy files 
+        wih X named ``features.npy`` and y named ``labels.npy``.
+        
+        :param data_or_path: training data
+        :type: str or np.array
+        :param array_folder_name: name of folder where arrays are stored. Defaults to ``arrays``
+        :param epochs: Number of epochs to run when training. Defaults to 300.
+        :param batch_size: Size of individual batches to 
+        :param learning_rate: 
+        :param train_keep_prob: 
+        :param test_keep_prob: 
+        :return: 
+        """
+        if isinstance(data_or_path, str):
+            features = np.load(oshelper.pathjoin(data_or_path, array_folder_name, 'features.npy'))
+            labels = np.load(oshelper.pathjoin(data_or_path, array_folder_name, 'labels.npy'))
+            print(features.shape)
+        else:
+            features, labels = data_or_path
 
+        train_features, test_features, train_labels, test_labels = randomly_assign_train_test(features, labels)
 
-def run_model(optimizer, accuracy, bitmap_X, bitmap_y):
-    X_train, X_test, y_train, y_test = randomly_assign_train_test(bitmap_X, bitmap_y)
-    print("training x {} training y {}".format(len(X_train), len(y_train)))
-    print("testing x {} testing y {}".format(len(X_test), len(y_test)))
+        with tf.Session() as sess:
+            print("Session starting")
 
-    with tf.Session() as sess:
-        print("Session starting")
+            # Initialization
+            merged_summary = tf.summary.merge_all()
+            writer = tf.summary.FileWriter(self.tb_dir)
+            writer.add_graph(sess.graph)
+            sess.run(tf.global_variables_initializer())
 
-        merged_summary = tf.summary.merge_all()
-        writer = tf.summary.FileWriter(TENSORBOARD_DIR)
-        writer.add_graph(sess.graph)
+            # Training loop
+            for epoch in range(epochs):
+                for i, (batch_X, batch_y) in \
+                        enumerate(next_batch(train_features, train_labels, batch_size=batch_size)):
 
-        sess.run(tf.global_variables_initializer())
+                    # Dict fed to train model
+                    train_dict = {self.X_placeholder: batch_X,
+                                  self.y_placeholder: batch_y,
+                                  self.keep_prob_placeholder: train_keep_prob,
+                                  self.learning_rate: learning_rate}
 
-        for epoch in range(NUMBER_OF_EPOCHS):
+                    sess.run(self.optimizer, feed_dict=train_dict)
 
-            for i, (batch_X, batch_y) in enumerate(next_batch(X_train, y_train, batch_size=BATCH_SIZE)):
+                    # Write to tensorboard
+                    s = sess.run(merged_summary, feed_dict=train_dict)
+                    writer.add_summary(s, i)
 
-                sess.run(optimizer, feed_dict={X_placeholder: batch_X,
-                                               y_placeholder: batch_y,
-                                               keep_prob_placeholder: TRAIN_KEEP_PROB})
+                accuracy_dict = {self.X_placeholder: train_features,
+                                 self.y_placeholder: train_labels,
+                                 self.keep_prob_placeholder: train_keep_prob}
 
-                s = sess.run(merged_summary, feed_dict={X_placeholder: batch_X,
-                                                        y_placeholder: batch_y,
-                                                        keep_prob_placeholder: TRAIN_KEEP_PROB})
-                writer.add_summary(s, i)
+                print("Train accuracy {}".format(self.accuracy.eval(accuracy_dict)))
 
-            print("Train accuracy {}".format(accuracy.eval({X_placeholder: X_train,
-                                                            y_placeholder: y_train,
-                                                            keep_prob_placeholder: TRAIN_KEEP_PROB})))
-            print("Test accuracy {}".format(accuracy.eval({X_placeholder: X_test,
-                                                           y_placeholder: y_test,
-                                                           keep_prob_placeholder: TEST_KEEP_PROB})))
-
-        print("Final Test accuracy {}".format(accuracy.eval({X_placeholder: X_test,
-                                                             y_placeholder: y_test,
-                                                             keep_prob_placeholder: TEST_KEEP_PROB})))
+                accuracy_dict[self.keep_prob_placeholder] = test_keep_prob
+                print("Test accuracy {}".format(self.accuracy.eval(accuracy_dict)))
