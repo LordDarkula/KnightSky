@@ -19,12 +19,34 @@ def conv_layer(X, W, b, name='conv'):
                               strides=[1, 2, 2, 1], padding='SAME')
 
 
-def fc_layer(X, W, b, name='fc'):
+def relu_layer(X, W, b, name='relu_layer'):
     with tf.name_scope(name):
         activation = tf.nn.relu(tf.matmul(X, W) + b)
 
         tf.summary.histogram('weights', W)
         tf.summary.histogram('biases', b)
+        tf.summary.histogram('activation', activation)
+
+        return activation
+
+
+def sigmoid_layer(X, weights, biases, name='sigmoid_layer'):
+    with tf.name_scope(name):
+        activation = tf.sigmoid(tf.matmul(X, weights) + biases)
+
+        tf.summary.histogram('weights', weights)
+        tf.summary.histogram('biases', biases)
+        tf.summary.histogram('activation', activation)
+
+        return activation
+
+
+def tanh_layer(X, weights, biases, name='tanh_layer'):
+    with tf.name_scope(name):
+        activation = tf.tanh(tf.matmul(X, weights) + biases)
+
+        tf.summary.histogram('weights', weights)
+        tf.summary.histogram('biases', biases)
         tf.summary.histogram('activation', activation)
 
         return activation

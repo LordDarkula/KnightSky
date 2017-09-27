@@ -1,5 +1,5 @@
 import importlib
-print("doing")
+
 try:
     importlib.import_module("chess_py")
 except ImportError:

@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from KnightSky.helpers import oshelper
 from KnightSky.models.cnn.helpers import tensorboardsetup
-from KnightSky.models.cnn.helpers.layers import conv_layer, fc_layer
+from KnightSky.models.cnn.helpers import layers
 from KnightSky.models.cnn.helpers.variables import weight_variable, bias_variable
 from KnightSky.preprocessing.split import randomly_assign_train_test, next_batch
 
@@ -40,25 +40,27 @@ class BoardEvaluator:
         self.accuracy = None
         self._create_model()
 
+    @classmethod
+    def from_saved(cls):
+        pass
+
     def _create_model(self):
         X = tf.reshape(self.X_placeholder, [-1, self.LENGTH, self.LENGTH, 1])
 
-        W_conv1 = weight_variable([6, 6, 1, 32])
-        b_conv1 = bias_variable([32])
+        conv1 = {'weights': weight_variable([6, 6, 1, 32]),
+                 'biases':  bias_variable([32])}
+        model = layers.conv_layer(X, conv1['weights'], conv1['biases'], name='conv1')
 
-        model = conv_layer(X, W_conv1, b_conv1, name='conv1')
-
-        W_conv2 = weight_variable([2, 2, 32, 64])
-        b_conv2 = bias_variable([64])
-
-        model = conv_layer(model, W_conv2, b_conv2, name='conv2')
+        conv2 = {'weights': weight_variable([2, 2, 32, 64]),
+                 'biases': bias_variable([64])}
+        model = layers.conv_layer(model, conv2['weights'], conv2['biases'], name='conv2')
 
         model = tf.reshape(model, [-1, 2*2*self.BOARD_SIZE])
 
         w1 = weight_variable([2*2*self.BOARD_SIZE, 1024])
         b1 = bias_variable([1024])
 
-        model = fc_layer(model, w1, b1, name='fc1')
+        model = layers.relu_layer(model, w1, b1, name='fc1')
 
         model = tf.nn.dropout(model, self.keep_prob_placeholder)
 
@@ -82,11 +84,12 @@ class BoardEvaluator:
             self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             tf.summary.scalar("accuracy", self.accuracy)
 
-    def train_on(self, data_or_path,
+    def train_on(self,
+                 data_or_path,
                  array_folder_name='arrays',
                  epochs=300,
                  batch_size=100,
-                 learning_rate=0.05,
+                 learning_rate=0.5,
                  train_keep_prob=0.5,
                  test_keep_prob=1.0):
         """
@@ -102,12 +105,10 @@ class BoardEvaluator:
         :param learning_rate: 
         :param train_keep_prob: 
         :param test_keep_prob: 
-        :return: 
         """
         if isinstance(data_or_path, str):
             features = np.load(oshelper.pathjoin(data_or_path, array_folder_name, 'features.npy'))
             labels = np.load(oshelper.pathjoin(data_or_path, array_folder_name, 'labels.npy'))
-            print(features.shape)
         else:
             features, labels = data_or_path
 
@@ -128,10 +129,10 @@ class BoardEvaluator:
                         enumerate(next_batch(train_features, train_labels, batch_size=batch_size)):
 
                     # Dict fed to train model
-                    train_dict = {self.X_placeholder: batch_X,
-                                  self.y_placeholder: batch_y,
+                    train_dict = {self.X_placeholder:         batch_X,
+                                  self.y_placeholder:         batch_y,
                                   self.keep_prob_placeholder: train_keep_prob,
-                                  self.learning_rate: learning_rate}
+                                  self.learning_rate:         learning_rate}
 
                     sess.run(self.optimizer, feed_dict=train_dict)
 
@@ -139,11 +140,11 @@ class BoardEvaluator:
                     s = sess.run(merged_summary, feed_dict=train_dict)
                     writer.add_summary(s, i)
 
-                accuracy_dict = {self.X_placeholder: train_features,
-                                 self.y_placeholder: train_labels,
+                accuracy_dict = {self.X_placeholder:         train_features,
+                                 self.y_placeholder:         train_labels,
                                  self.keep_prob_placeholder: train_keep_prob}
 
                 print("Train accuracy {}".format(self.accuracy.eval(accuracy_dict)))
 
                 accuracy_dict[self.keep_prob_placeholder] = test_keep_prob
-                print("Test accuracy {}".format(self.accuracy.eval(accuracy_dict)))
+                print("Test  accuracy {}".format(self.accuracy.eval(accuracy_dict)))

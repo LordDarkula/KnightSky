@@ -15,6 +15,7 @@ def current_run_directory(tmp_path, run_name='knight'):
     Delete tensorboard directory to start count over
     """
     runpath = oshelper.pathjoin(tmp_path, run_name)
+    print(runpath)
     oshelper.create_if_not_exists(runpath)
     count = _incr_tb_run_number(runpath)
     return oshelper.pathjoin(runpath, count)
