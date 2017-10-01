@@ -119,13 +119,13 @@ class ArrayBuilder:
                     data_board.update(move)
 
                     features.append(extract_features(data_board))
-                    if color_dict[current_color] == result: # This player won the game
+                    if color_dict[current_color] == result:  # This player won the game
                         if current_color == color.white:
                             labels.append([1, 0, 0])
                         else:
                             labels.append([0, 0, 1])
 
-                    elif color_dict[current_color] == result: # This player lost the game
+                    elif color_dict[current_color] == result:  # This player lost the game
                         if current_color == color.white:
                             labels.append([0, 0, 1])
                         else:

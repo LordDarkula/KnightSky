@@ -114,6 +114,8 @@ class BoardEvaluator:
 
         train_features, test_features, train_labels, test_labels = randomly_assign_train_test(features, labels)
 
+        saver = tf.train.Saver()
+
         with tf.Session() as sess:
             print("Session starting")
 
@@ -148,3 +150,25 @@ class BoardEvaluator:
 
                 accuracy_dict[self.keep_prob_placeholder] = test_keep_prob
                 print("Test  accuracy {}".format(self.accuracy.eval(accuracy_dict)))
+
+                saver.save(sess, self.tmp_path)
+
+    def eval(self, features):
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            print("Position evaluation is {}".format(self.evaluate.eval(feed_dict={self.X_placeholder: features,
+                                                                                   self.keep_prob_placeholder: 1.0},
+                                                                        session=sess)))
+
+    def restore(self, features):
+        tf.reset_default_graph()
+
+        self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
+
+        saver = tf.train.Saver()
+
+        with tf.Session() as sess:
+            saver.restore(sess, oshelper.pathjoin(self.tmp_path, 'model.ckpt'))
+            print("Position evaluation is {}".format(self.evaluate.eval(feed_dict={self.X_placeholder: features,
+                                                     self.keep_prob_placeholder: 1.0})))
+
