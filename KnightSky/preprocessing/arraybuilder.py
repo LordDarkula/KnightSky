@@ -80,10 +80,10 @@ class ArrayBuilder:
             for i, line in enumerate(processed):
                 print("On game number {}".format(i))
                 if line[0:3] == "1/2":  # Game is drawn
-                    result = 0.5
+                    result = [0, 1, 0]
                     game_str = line[4:]
                 else:                   # Victor exists
-                    result = int(line[0:1])
+                    result = [1, 0, 0] if int(line[0:1]) == 0 else [0, 0, 1]
                     game_str = line[2:]
                 print("Result of the game was {}".format(result))
 
@@ -100,41 +100,19 @@ class ArrayBuilder:
 
                     try:
                         move = converter.incomplete_alg(move_str, current_color)
+                        if move is not None:
+                            move = converter.make_legal(move, data_board)
                     except AttributeError as error:
                         print(error)
                         break
                     if move is None:
-                        print("Broken in incomplete alg")
-                        break
-
-                    try:
-                        move = converter.make_legal(move, data_board)
-                    except AttributeError as error:
-                        print(error)
-                        break
-                    if move is None:
-                        print("Broken in make lega alg")
+                        print("Move is None")
                         break
 
                     data_board.update(move)
 
                     features.append(extract_features(data_board))
-                    if color_dict[current_color] == result:  # This player won the game
-                        if current_color == color.white:
-                            labels.append([1, 0, 0])
-                        else:
-                            labels.append([0, 0, 1])
-
-                    elif color_dict[current_color] == result:  # This player lost the game
-                        if current_color == color.white:
-                            labels.append([0, 0, 1])
-                        else:
-                            labels.append([1, 0, 0])
-                    else:  # Game was drawn
-                        labels.append([0, 1, 0])
-
-                if i >= 3824:
-                    break
+                    labels.append(result)
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))

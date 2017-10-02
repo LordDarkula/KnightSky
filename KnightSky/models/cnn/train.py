@@ -160,7 +160,7 @@ class BoardEvaluator:
                                                                                    self.keep_prob_placeholder: 1.0},
                                                                         session=sess)))
 
-    def restore(self, features):
+    def restore(self):
         tf.reset_default_graph()
 
         self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
