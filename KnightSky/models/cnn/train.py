@@ -25,6 +25,7 @@ class BoardEvaluator:
     def __init__(self, tmp_path):
         # Tensorboard Setup
         self.tmp_path = tmp_path
+        self.save_path = oshelper.pathjoin(self.tmp_path, 'saved', 'model')
         oshelper.create_if_not_exists(tmp_path)
         self.tb_dir = tensorboardsetup.current_run_directory(tmp_path)
 
@@ -151,7 +152,7 @@ class BoardEvaluator:
                 accuracy_dict[self.keep_prob_placeholder] = test_keep_prob
                 print("Test  accuracy {}".format(self.accuracy.eval(accuracy_dict)))
 
-                saver.save(sess, self.tmp_path)
+                saver.save(sess, self.save_path)
 
     def eval(self, features):
         with tf.Session() as sess:
