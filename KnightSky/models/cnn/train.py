@@ -140,8 +140,9 @@ class BoardEvaluator:
                     sess.run(self.optimizer, feed_dict=train_dict)
 
                     # Write to tensorboard
-                    s = sess.run(merged_summary, feed_dict=train_dict)
-                    writer.add_summary(s, i)
+                    if i % 5 == 0:
+                        s = sess.run(merged_summary, feed_dict=train_dict)
+                        writer.add_summary(s, i)
 
                 accuracy_dict = {self.X_placeholder:         train_features,
                                  self.y_placeholder:         train_labels,
@@ -152,7 +153,7 @@ class BoardEvaluator:
                 accuracy_dict[self.keep_prob_placeholder] = test_keep_prob
                 print("Test  accuracy {}".format(self.accuracy.eval(accuracy_dict)))
 
-                saver.save(sess, self.save_path)
+            saver.save(sess, self.save_path)
 
     def eval(self, features):
         with tf.Session() as sess:
@@ -162,14 +163,15 @@ class BoardEvaluator:
                                                                         session=sess)))
 
     def restore(self):
-        tf.reset_default_graph()
-
-        self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
-
-        saver = tf.train.Saver()
-
-        with tf.Session() as sess:
-            saver.restore(sess, oshelper.pathjoin(self.tmp_path, 'model.ckpt'))
-            print("Position evaluation is {}".format(self.evaluate.eval(feed_dict={self.X_placeholder: features,
-                                                     self.keep_prob_placeholder: 1.0})))
+        # tf.reset_default_graph()
+        #
+        # self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
+        #
+        # saver = tf.train.Saver()
+        #
+        # with tf.Session() as sess:
+        #     saver.restore(sess, oshelper.pathjoin(self.tmp_path, 'model.ckpt'))
+        #     print("Position evaluation is {}".format(self.evaluate.eval(feed_dict={self.X_placeholder: features,
+        #                                              self.keep_prob_placeholder: 1.0})))
+        pass
 
