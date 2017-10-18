@@ -38,7 +38,6 @@ class ArrayBuilder:
         def process_level(path):
             if os.path.isfile(path):
                 self._remove_metadata(path)
-
             else:
                 for group in os.listdir(path):
                     process_level(os.path.join(path, group))
@@ -56,14 +55,7 @@ class ArrayBuilder:
                     processed_line = line[:end].replace('+', '').replace('#', '') + '\n'
                     processed_line = re.sub(r'[1-9][0-9]*\.\s', '', processed_line)
 
-                    result = line[end:]
-                    if '1-0' in result:
-                        result = '0'
-                    elif '0-1' in result:
-                        result = '1'
-                    else:
-                        result = '1/2'
-
+                    result = float(0 if '1-0' in line[end:] else 1 if '0-1' in line[end:] else 0.5)
                     processed.write("{result} {movesequence}".format(result=result, movesequence=processed_line))
 
     def convert_to_arrays(self):

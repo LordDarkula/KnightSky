@@ -9,4 +9,5 @@ if __name__ == '__main__':
     evaluator.train_on(os.path.abspath(os.path.join(os.pardir, os.pardir, os.pardir, 'data')),
                        epochs=5000,
                        learning_rate=0.00001)
-    evaluator.eval([featurehelper.extract_features(Board.init_default())])
+    print("Board evaluation is {}"
+          .format(evaluator.eval([featurehelper.extract_features(Board.init_default())])))

@@ -48,12 +48,12 @@ class BoardEvaluator:
     def _create_model(self):
         X = tf.reshape(self.X_placeholder, [-1, self.LENGTH, self.LENGTH, 1])
 
-        conv1 = {'weights': weight_variable([6, 6, 1, 32]),
-                 'biases':  bias_variable([32])}
+        conv1 = {'weights': weight_variable([4, 4, 1, 64]),
+                 'biases':  bias_variable([64])}
         model = layers.conv_layer(X, conv1['weights'], conv1['biases'], name='conv1')
 
-        conv2 = {'weights': weight_variable([2, 2, 32, 64]),
-                 'biases': bias_variable([64])}
+        conv2 = {'weights': weight_variable([2, 2, 64, 64]),
+                 'biases':  bias_variable([64])}
         model = layers.conv_layer(model, conv2['weights'], conv2['biases'], name='conv2')
 
         model = tf.reshape(model, [-1, 2*2*self.BOARD_SIZE])
@@ -158,9 +158,9 @@ class BoardEvaluator:
     def eval(self, features):
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            print("Position evaluation is {}".format(self.evaluate.eval(feed_dict={self.X_placeholder: features,
-                                                                                   self.keep_prob_placeholder: 1.0},
-                                                                        session=sess)))
+            return float(self.evaluate.eval(feed_dict={self.X_placeholder: features,
+                                                       self.keep_prob_placeholder: 1.0},
+                                            session=sess))
 
     def restore(self):
         # tf.reset_default_graph()
