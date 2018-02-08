@@ -14,10 +14,11 @@ class ArrayBuilder:
     def __init__(self, datapath):
         """
         Creates object that processes data and converts it to numpy arrays.
-        Requires original PGN files to be from FICS database and in ``/data/raw``.
-        Saves processed PGN in ``/data/processed`` and np arrays in ``/data/arrays``.
+        Requires original PGN files to be from FICS database and in ``data/raw``.
+        Saves processed PGN in ``data/processed`` and np arrays in ``data/arrays``.
         
-        :param datapath: path to data folder
+        :param: datapath: path to data folder
+        :type: datapath: str
         """
         if not os.path.exists(datapath):
             raise FileNotFoundError("create /data/raw and put data in there")
@@ -32,8 +33,8 @@ class ArrayBuilder:
 
     def process_files(self):
         """
-        Recursive function that goes through all directories in ``/data/raw``
-        and processes them.
+        Recursive function that goes through all directories in ``data/raw``
+        and processes them. Saves output in ``data/processed``
         """
         def process_level(path):
             if os.path.isfile(path):
@@ -63,6 +64,8 @@ class ArrayBuilder:
         Converts to two arrays, X and y.
         X is the list of all chess positions in feature_list form
         Y is the list of evaluations in the form [good for white, draw, good for black]
+        Saves output in ``data/arrays`` and returns it.
+
         :return: X and y
         """
         features, labels = [], []

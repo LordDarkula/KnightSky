@@ -9,7 +9,9 @@ import os
 def create_if_not_exists(path):
     """
     Creates directory or file if it does not exist.
+
     :param path: Path to file
+    :type: path: str
     """
     path = os.path.normpath(abspath(path))
     if not os.path.exists(path):
@@ -29,7 +31,9 @@ def create_if_not_exists(path):
 def abspath(path):
     """
     Copy of ``os.path.abspath`` to make the function name shorter.
-    :param path: Path to file
+
+    :param: path: Path to file
+    :type: path: str
     """
     return os.path.abspath(path)
 
@@ -37,6 +41,8 @@ def abspath(path):
 def pathjoin(*path):
     """
     Copy of ``os.path.join`` to make the function name shorter.
-    :param path: Path to file
+
+    :param: path: Path to file
+    :type: path: str
     """
     return os.path.join(*path)
