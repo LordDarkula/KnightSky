@@ -7,7 +7,7 @@ import itertools
 from chess_py import *
 
 from KnightSky.helpers import oshelper
-from KnightSky.preprocessing.helpers.featurehelper import extract_features
+from KnightSky.preprocessing.helpers.featurehelper import extract_features_from_position
 
 
 class ArrayBuilder:
@@ -106,7 +106,7 @@ class ArrayBuilder:
 
                     data_board.update(move)
 
-                    features.append(extract_features(data_board))
+                    features.append(extract_features_from_position(data_board))
                     labels.append(result)
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))

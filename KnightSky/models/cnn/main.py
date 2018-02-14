@@ -10,4 +10,4 @@ if __name__ == '__main__':
                        epochs=5000,
                        learning_rate=0.00001)
     print("Board evaluation is {}"
-          .format(evaluator.eval([featurehelper.extract_features(Board.init_default())])))
+          .format(evaluator.eval([featurehelper.extract_features_from_position(Board.init_default())])))
