@@ -36,14 +36,14 @@ class ArrayBuilder:
         Recursive function that goes through all directories in ``data/raw``
         and processes them. Saves output in ``data/processed``
         """
-        def process_level(path):
+        def process_directory(path):
             if os.path.isfile(path):
                 self._remove_metadata(path)
             else:
                 for group in os.listdir(path):
-                    process_level(os.path.join(path, group))
+                    process_directory(os.path.join(path, group))
 
-        process_level(self.paths_dict['raw'])
+        process_directory(self.paths_dict['raw'])
 
     def _remove_metadata(self, rawpath):
         forfeit = "forfeits by disconnection"
