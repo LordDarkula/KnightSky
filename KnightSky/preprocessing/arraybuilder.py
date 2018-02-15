@@ -7,7 +7,8 @@ import itertools
 from chess_py import *
 
 from KnightSky.helpers import oshelper
-from KnightSky.preprocessing.helpers.featurehelper import extract_features_from_position
+from KnightSky.preprocessing.helpers.featurehelper import extract_features_from_positions
+from KnightSky.preprocessing.helpers.featurehelper import classify_position
 
 
 class ArrayBuilder:
@@ -21,7 +22,7 @@ class ArrayBuilder:
         :type: datapath: str
         """
         if not os.path.exists(datapath):
-            raise FileNotFoundError("create /data/raw and put data in there")
+            raise FileNotFoundError("create /data/raw path and put chess data in there")
 
         self.paths_dict = {'data': datapath,
                            'raw': oshelper.pathjoin(datapath, "raw"),
@@ -68,7 +69,7 @@ class ArrayBuilder:
 
         :return: X and y
         """
-        features, labels = [], []
+        features = []
         color_dict = {color.white: 0, color.black: 1}
 
         with open(self.paths_dict['processed'], 'r') as processed:
@@ -105,9 +106,9 @@ class ArrayBuilder:
                         break
 
                     data_board.update(move)
+                    features.append(extract_features_from_positions(data_board))
 
-                    features.append(extract_features_from_position(data_board))
-                    labels.append(result)
+        labels = classify_position(features)
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))

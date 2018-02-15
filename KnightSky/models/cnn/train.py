@@ -86,7 +86,7 @@ class BoardEvaluator:
             tf.summary.scalar("accuracy", self.accuracy)
 
     def train_on(self,
-                 data_or_path,
+                 location,
                  array_folder_name='arrays',
                  epochs=300,
                  batch_size=100,
@@ -98,7 +98,7 @@ class BoardEvaluator:
         or the path to a folder containing 2 npy files 
         wih X named ``features.npy`` and y named ``labels.npy``.
         
-        :param data_or_path: training data
+        :param location: training data
         :type: str or np.array
         :param array_folder_name: name of folder where arrays are stored. Defaults to ``arrays``
         :param epochs: Number of epochs to run when training. Defaults to 300.
@@ -107,11 +107,11 @@ class BoardEvaluator:
         :param train_keep_prob: 
         :param test_keep_prob: 
         """
-        if isinstance(data_or_path, str):
-            features = np.load(oshelper.pathjoin(data_or_path, array_folder_name, 'features.npy'))
-            labels = np.load(oshelper.pathjoin(data_or_path, array_folder_name, 'labels.npy'))
+        if isinstance(location, str):
+            features = np.load(oshelper.pathjoin(location, array_folder_name, 'features.npy'))
+            labels = np.load(oshelper.pathjoin(location, array_folder_name, 'labels.npy'))
         else:
-            features, labels = data_or_path
+            features, labels = location
 
         train_features, test_features, train_labels, test_labels = randomly_assign_train_test(features, labels)
 

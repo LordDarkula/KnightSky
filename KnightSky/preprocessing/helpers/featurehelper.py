@@ -9,7 +9,7 @@ from chess_py import color
 from chess_py.pieces.piece_const import Piece_values
 
 
-def extract_features_from_position(board):
+def extract_features_from_positions(board):
     """
     Converts board to 1D numpy array consisting of
     piece values.
@@ -50,4 +50,4 @@ def classify_position(positions):
             print("Material even")
             advantages[i][1] = 1
 
-    return positions, advantages
+    return advantages
