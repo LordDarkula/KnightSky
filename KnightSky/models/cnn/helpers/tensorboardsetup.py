@@ -20,6 +20,7 @@ class TensorboardManager:
         print(self._path)
 
         if not os.path.exists(self._run_tracking_file_path):
+            oshelper.create_if_not_exists(self._run_tracking_file_path)
             with open(self._run_tracking_file_path, 'w') as f:
                 f.write(str(1))
 
