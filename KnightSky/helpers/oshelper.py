@@ -6,7 +6,7 @@ Helpers to make widely used os tasks simpler.
 import os
 
 
-def create_if_not_exists(path):
+def create_if_not_exists(path, is_file=False):
     """
     Creates directory or file if it does not exist.
 
@@ -16,7 +16,7 @@ def create_if_not_exists(path):
     path = os.path.normpath(abspath(path))
     if not os.path.exists(path):
         print("This is it " + path)
-        if '.' in path:  # Path refers to a file
+        if is_file:  # Path refers to a file
             print("path is not dir")
             os.makedirs(os.path.dirname(path))
             open(path, 'w').close()

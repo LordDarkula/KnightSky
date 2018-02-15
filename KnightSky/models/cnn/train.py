@@ -26,7 +26,7 @@ class BoardEvaluator:
         # Tensorboard Setup
         self.tmp_path = tmp_path
         self.save_path = oshelper.pathjoin(self.tmp_path, 'saved', 'model')
-        oshelper.create_if_not_exists(tmp_path)
+        oshelper.create_if_not_exists(tmp_path, is_file=False)
         self.tb_dir = tensorboardsetup.current_run_directory(tmp_path)
 
         # Placholder initialization

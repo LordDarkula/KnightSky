@@ -16,7 +16,7 @@ def current_run_directory(tmp_path, run_name='knight'):
     """
     runpath = oshelper.pathjoin(tmp_path, run_name)
     print(runpath)
-    oshelper.create_if_not_exists(runpath)
+    oshelper.create_if_not_exists(runpath, is_file=False)
     count = _increment_tb_run_number(runpath)
     return oshelper.pathjoin(runpath, str(count))
 

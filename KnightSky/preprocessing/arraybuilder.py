@@ -28,8 +28,8 @@ class ArrayBuilder:
                            'processed': oshelper.pathjoin(datapath, "processed", "processed.pgn"),
                            'arrays': oshelper.pathjoin(datapath, "arrays")}
 
-        oshelper.create_if_not_exists(self.paths_dict['processed'])
-        oshelper.create_if_not_exists(self.paths_dict['raw'])
+        oshelper.create_if_not_exists(self.paths_dict['processed'], is_file=True)
+        oshelper.create_if_not_exists(self.paths_dict['raw'], is_file=False)
 
     def process_files(self):
         """
