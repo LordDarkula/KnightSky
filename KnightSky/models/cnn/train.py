@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 from KnightSky.helpers import oshelper
-from KnightSky.models.cnn.helpers import tensorboardsetup
+from KnightSky.models.cnn.helpers.tensorboardsetup import TensorboardManager
 from KnightSky.models.cnn.helpers import layers
 from KnightSky.models.cnn.helpers.variables import weight_variable, bias_variable
 from KnightSky.preprocessing.split import randomly_assign_train_test, next_batch
@@ -26,8 +26,8 @@ class BoardEvaluator:
         # Tensorboard Setup
         self.tmp_path = tmp_path
         self.save_path = oshelper.pathjoin(self.tmp_path, 'saved', 'model')
-        oshelper.create_if_not_exists(tmp_path)
-        self.tb_dir = tensorboardsetup.current_run_directory(tmp_path)
+        oshelper.create_if_not_exists(tmp_path, is_file=False)
+        self.tb_manager = TensorboardManager(tmp_path)
 
         # Placholder initialization
         self.X_placeholder = tf.placeholder(tf.float32, [None, self.BOARD_SIZE], name="X")
@@ -86,7 +86,7 @@ class BoardEvaluator:
             tf.summary.scalar("accuracy", self.accuracy)
 
     def train_on(self,
-                 data_or_path,
+                 location,
                  array_folder_name='arrays',
                  epochs=300,
                  batch_size=100,
@@ -98,7 +98,7 @@ class BoardEvaluator:
         or the path to a folder containing 2 npy files 
         wih X named ``features.npy`` and y named ``labels.npy``.
         
-        :param data_or_path: training data
+        :param location: training data
         :type: str or np.array
         :param array_folder_name: name of folder where arrays are stored. Defaults to ``arrays``
         :param epochs: Number of epochs to run when training. Defaults to 300.
@@ -107,11 +107,11 @@ class BoardEvaluator:
         :param train_keep_prob: 
         :param test_keep_prob: 
         """
-        if isinstance(data_or_path, str):
-            features = np.load(oshelper.pathjoin(data_or_path, array_folder_name, 'features.npy'))
-            labels = np.load(oshelper.pathjoin(data_or_path, array_folder_name, 'labels.npy'))
+        if isinstance(location, str):
+            features = np.load(oshelper.pathjoin(location, array_folder_name, 'features.npy'))
+            labels = np.load(oshelper.pathjoin(location, array_folder_name, 'labels.npy'))
         else:
-            features, labels = data_or_path
+            features, labels = location
 
         train_features, test_features, train_labels, test_labels = randomly_assign_train_test(features, labels)
 
@@ -122,8 +122,9 @@ class BoardEvaluator:
 
             # Initialization
             merged_summary = tf.summary.merge_all()
-            writer = tf.summary.FileWriter(self.tb_dir)
+            writer = tf.summary.FileWriter(self.tb_manager.tensorboard_path)
             writer.add_graph(sess.graph)
+            self.tb_manager += 1
             sess.run(tf.global_variables_initializer())
 
             # Training loop

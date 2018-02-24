@@ -9,37 +9,40 @@ import os
 from KnightSky.helpers import oshelper
 
 
-def current_run_directory(tmp_path, run_name='knight'):
-    """
-    Sets correct tensorboard directory dynamically based on number of runs.
-    Delete tensorboard directory to start count over
-    """
-    runpath = oshelper.pathjoin(tmp_path, run_name)
-    print(runpath)
-    oshelper.create_if_not_exists(runpath)
-    count = _incr_tb_run_number(runpath)
-    return oshelper.pathjoin(runpath, count)
+class TensorboardManager:
+    def __init__(self, tmp_path, run_name='knight', run_tracking_file='count.txt'):
+        """
+        Returns correct tensorboard directory which is set dynamically based on number of runs.
+        Delete tensorboard directory to start count over
+        """
+        self._path = oshelper.pathjoin(tmp_path, run_name)
+        self._run_tracking_file_path = oshelper.pathjoin(self._path, run_tracking_file)
+        print(self._path)
 
+        if not os.path.exists(self._run_tracking_file_path):
+            oshelper.create_if_not_exists(self._run_tracking_file_path)
+            with open(self._run_tracking_file_path, 'w') as f:
+                f.write(str(1))
 
-def _incr_tb_run_number(runpath):
-    """
-    Increments tensorboard count by 1 for the new run. If no runs are present, create the directory itself.
-    :param tbpath: path of tensorboard
-    :return: The number of runs plus 1 for use as the name of the new run
-    """
-    countfilename = oshelper.pathjoin(runpath, 'count.txt')
-    if not os.path.exists(countfilename):
+    @property
+    def tensorboard_path(self):
+        return oshelper.pathjoin(self._path, self.run_number)
 
-        with open(countfilename, 'w') as f:
-            f.write('1')
+    @property
+    def run_number(self):
+        with open(self._run_tracking_file_path, 'r') as f:
+            return int(f.readline())
 
-        return '1'
+    def __iadd__(self, other):
+        """
+        Increments tensorboard count by 1 for the new run. If no runs are present, create the directory itself.
+        :param other: integer describing run increment size
+        """
+        if not isinstance(other, int):
+            raise TypeError("Must increment run by integer amount")
 
-    else:
-        with open(countfilename, 'r') as f:
-            current = int(f.readline())
+        with open(self._run_tracking_file_path, 'r') as f:
+            current_run = int(f.readline())
 
-        with open(countfilename, 'w') as f:
-            f.write(str(current + 1))
-
-        return str(current + 1)
+        with open(self._run_tracking_file_path, 'w') as f:
+            f.write(str(current_run + 1))
