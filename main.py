@@ -27,9 +27,9 @@ from KnightSky.models.cnn.train import BoardEvaluator
 
 
 if __name__ == "__main__":
-    # proc = ArrayBuilder(os.path.join(os.getcwd(), 'data'))
-    # proc.process_files()
-    # proc.convert_to_arrays()
+    proc = ArrayBuilder(os.path.join(os.getcwd(), 'data'))
+    proc.process_files()
+    proc.convert_to_arrays()
     model = BoardEvaluator(os.path.abspath(os.path.join(os.getcwd(), 'tmp')))
     model.train_on(os.path.abspath(os.path.join(os.getcwd(), 'data')))
 
