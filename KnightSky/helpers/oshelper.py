@@ -18,7 +18,10 @@ def create_if_not_exists(path, is_file=False):
         print("This is it " + path)
         if is_file:  # Path refers to a file
             print("path is not dir")
-            os.makedirs(os.path.dirname(path))
+            try:
+                os.makedirs(os.path.dirname(path))
+            except FileExistsError:
+                pass
             open(path, 'w').close()
         else:
             print("path is dir")
