@@ -22,9 +22,9 @@ def extract_features_from_positions(board):
     return np.array([fit_values.val(square, color.white) for square in board])
 
 
-def classify_position(positions):
+def classify_position_by_material(positions):
     """
-    Creates one hot vectors 
+    Creates one hot vectors by materials
     [0, 0, 1] if white has more material,
     [1, 0, 0] if black has more material,
     [0, 1, 0] if the material is even.

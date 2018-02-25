@@ -8,7 +8,7 @@ from chess_py import *
 
 from KnightSky.helpers import oshelper
 from KnightSky.preprocessing.helpers.featurehelper import extract_features_from_positions
-from KnightSky.preprocessing.helpers.featurehelper import classify_position
+from KnightSky.preprocessing.helpers.featurehelper import classify_position_by_material
 
 
 class ArrayBuilder:
@@ -109,7 +109,7 @@ class ArrayBuilder:
                     data_board.update(move)
                     features.append(extract_features_from_positions(data_board))
 
-        labels = classify_position(features)
+        labels = classify_position_by_material(features)
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))
