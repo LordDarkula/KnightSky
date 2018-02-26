@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 Script meant to automate the naming of individual tensorboard runs.
 Calling ``current_run_directory()`` will create the necessary directories if they do not exist,
@@ -6,6 +7,7 @@ increment the run count, and return the path to the current tensorboard run.
 """
 
 import os
+
 from KnightSky.helpers import oshelper
 
 

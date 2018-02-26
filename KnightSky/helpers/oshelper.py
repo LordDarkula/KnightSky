@@ -3,6 +3,7 @@
 """
 Helpers to make widely used os tasks simpler.
 """
+
 import os
 
 
@@ -12,6 +13,9 @@ def create_if_not_exists(path, is_file=False):
 
     :param path: Path to file
     :type: path: str
+
+    :param is_file: Whether path points to file or directory
+    :type: is_file: bool
     """
     path = os.path.normpath(abspath(path))
     if not os.path.exists(path):

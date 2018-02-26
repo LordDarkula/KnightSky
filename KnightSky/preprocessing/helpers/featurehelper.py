@@ -3,6 +3,7 @@
 """
 Helpers to make constructing features and labels easier.
 """
+
 import numpy as np
 
 from chess_py import color

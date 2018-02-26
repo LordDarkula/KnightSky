@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Class to access all pre-processing functionality.
+"""
+
 import os
 import numpy as np
 import re
@@ -22,7 +26,7 @@ class ArrayBuilder:
         :type: datapath: str
         """
         if not os.path.exists(datapath):
-            raise FileNotFoundError("create /data/raw path and put chess data in there")
+            raise FileNotFoundError("Please create /data/raw path and put chess data in there")
 
         self.paths_dict = {'data': datapath,
                            'raw': oshelper.pathjoin(datapath, "raw"),
