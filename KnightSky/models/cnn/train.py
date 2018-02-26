@@ -10,8 +10,8 @@ import tensorflow as tf
 from KnightSky.helpers import oshelper
 from KnightSky.models.cnn.helpers.tensorboardsetup import TensorboardManager
 from KnightSky.models.cnn.helpers import layers
-from KnightSky.models.cnn.helpers.variables import weight_variable, bias_variable
-from KnightSky.preprocessing.split import randomly_assign_train_test, next_batch
+from KnightSky.models.cnn.helpers import variables as var
+from KnightSky.preprocessing import split
 
 
 class BoardEvaluator:
@@ -48,25 +48,25 @@ class BoardEvaluator:
     def _create_model(self):
         X = tf.reshape(self.X_placeholder, [-1, self.LENGTH, self.LENGTH, 1])
 
-        conv1 = {'weights': weight_variable([4, 4, 1, 64]),
-                 'biases':  bias_variable([64])}
+        conv1 = {'weights': var.weight_variable([4, 4, 1, 64]),
+                 'biases':  var.bias_variable([64])}
         model = layers.conv_layer(X, conv1['weights'], conv1['biases'], name='conv1')
 
-        conv2 = {'weights': weight_variable([2, 2, 64, 64]),
-                 'biases':  bias_variable([64])}
+        conv2 = {'weights': var.weight_variable([2, 2, 64, 64]),
+                 'biases':  var.bias_variable([64])}
         model = layers.conv_layer(model, conv2['weights'], conv2['biases'], name='conv2')
 
         model = tf.reshape(model, [-1, 2*2*self.BOARD_SIZE])
 
-        w1 = weight_variable([2*2*self.BOARD_SIZE, 1024])
-        b1 = bias_variable([1024])
+        w1 = var.weight_variable([2*2*self.BOARD_SIZE, 1024])
+        b1 = var.bias_variable([1024])
 
         model = layers.relu_layer(model, w1, b1, name='fc1')
 
         model = tf.nn.dropout(model, self.keep_prob_placeholder)
 
-        w_out = weight_variable([1024, 3])
-        b_out = bias_variable([3])
+        w_out = var.weight_variable([1024, 3])
+        b_out = var.bias_variable([3])
 
         y_predicted = tf.matmul(model, w_out) + b_out
 
@@ -113,7 +113,7 @@ class BoardEvaluator:
         else:
             features, labels = location
 
-        train_features, test_features, train_labels, test_labels = randomly_assign_train_test(features, labels)
+        train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
 
         saver = tf.train.Saver()
 
@@ -130,7 +130,7 @@ class BoardEvaluator:
             # Training loop
             for epoch in range(epochs):
                 for i, (batch_X, batch_y) in \
-                        enumerate(next_batch(train_features, train_labels, batch_size=batch_size)):
+                        enumerate(split.next_batch(train_features, train_labels, batch_size=batch_size)):
 
                     # Dict fed to train model
                     train_dict = {self.X_placeholder:         batch_X,
@@ -175,4 +175,3 @@ class BoardEvaluator:
         #     print("Position evaluation is {}".format(self.evaluate.eval(feed_dict={self.X_placeholder: features,
         #                                              self.keep_prob_placeholder: 1.0})))
         pass
-
