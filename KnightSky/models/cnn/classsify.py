@@ -10,7 +10,7 @@ Classification functions create one hot vectors
 import numpy as np
 
 
-def by_material(positions):
+def material(positions):
     """
     Creates one hot vectors by materials
 
@@ -36,3 +36,10 @@ def by_material(positions):
             advantages[i][1] = 1
 
     return advantages
+
+
+def turn(games):
+    pass # TODO
+
+def result(games):
+    pass # TODO
