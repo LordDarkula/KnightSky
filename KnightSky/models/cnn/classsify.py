@@ -39,7 +39,8 @@ def material(positions):
 
 
 def turn(games):
-    pass # TODO
+    pass  # TODO
+
 
 def result(games):
-    pass # TODO
+    pass  # TODO
