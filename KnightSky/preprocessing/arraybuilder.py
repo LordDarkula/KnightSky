@@ -8,11 +8,11 @@ import os
 import numpy as np
 import re
 import itertools
+import json
 from chess_py import *
 
 from KnightSky.helpers import oshelper
-from KnightSky.preprocessing.helpers.featurehelper import extract_features_from_positions
-from KnightSky.preprocessing.helpers.featurehelper import classify_position_by_material
+from KnightSky.preprocessing.helpers import featurehelper
 
 
 class ArrayBuilder:
@@ -26,21 +26,21 @@ class ArrayBuilder:
         :type: datapath: str
         """
         if not os.path.exists(datapath):
-            raise FileNotFoundError("Please create /data/raw path and put chess data in there")
+            raise FileNotFoundError("Please create /raw path and put chess data in there")
 
         self.paths_dict = {'data': datapath,
                            'raw': oshelper.pathjoin(datapath, "raw"),
-                           'processed': oshelper.pathjoin(datapath, "processed", "processed.pgn"),
+                           'processed': oshelper.pathjoin(datapath, "processed", "processed.json"),
                            'arrays': oshelper.pathjoin(datapath, "arrays")}
+        self.games = {'games': []}
 
         oshelper.create_if_not_exists(self.paths_dict['processed'], is_file=True)
-        oshelper.create_if_not_exists(self.paths_dict['raw'], is_file=False)
         oshelper.create_if_not_exists(self.paths_dict['arrays'], is_file=False)
 
     def process_files(self):
         """
         Recursive function that goes through all directories in ``data/raw``
-        and processes them. Saves output in ``data/processed``
+        and processes them. Saves output as json in ``data/processed``
         """
         def process_directory(path):
             if os.path.isfile(path):
@@ -51,19 +51,26 @@ class ArrayBuilder:
 
         process_directory(self.paths_dict['raw'])
 
+        with open(self.paths_dict['processed'], 'w') as f:
+            json.dump(self.games, f)
+        self.games['games'] = []
+
     def _remove_metadata(self, rawpath):
         forfeit = "forfeits by disconnection"
-        with open(rawpath, 'r') as raw, \
-                open(self.paths_dict['processed'], 'w+') as processed:
+        with open(rawpath, 'r') as raw:
 
             for line in raw:
-                if line[:2] == "1." and forfeit not in line: # Game is there
+                if line[:2] == "1." and forfeit not in line:  # Valid Game
                     end = line.index('{')
-                    processed_line = line[:end].replace('+', '').replace('#', '') + '\n'
+                    processed_line = line[:end].replace('+', '').replace('#', '')
                     processed_line = re.sub(r'[1-9][0-9]*\.\s', '', processed_line)
+                    result = float(0 if '1-0' in line[end:]
+                                   else 1 if '0-1' in line[end:]
+                                   else 0.5)
 
-                    result = float(0 if '1-0' in line[end:] else 1 if '0-1' in line[end:] else 0.5)
-                    processed.write("{result} {movesequence}".format(result=result, movesequence=processed_line))
+                    game_dict = {'result': result,
+                                 'moves': processed_line.split(' ')}
+                    self.games['games'].append(game_dict)
 
     def convert_to_arrays(self):
         """
@@ -111,11 +118,16 @@ class ArrayBuilder:
                         break
 
                     data_board.update(move)
-                    features.append(extract_features_from_positions(data_board))
+                    features.append(featurehelper.extract_features_from_positions(data_board))
 
-        labels = classify_position_by_material(features)
+        labels = featurehelper.classify_position_by_material(features)
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))
 
         return features, labels
+
+
+if __name__ == '__main__':
+    builder = ArrayBuilder(os.path.abspath(os.path.join(os.pardir, os.pardir, 'data')))
+    builder.process_files()
