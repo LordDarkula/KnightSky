@@ -32,7 +32,8 @@ class ArrayBuilder:
                            'raw': oshelper.pathjoin(datapath, "raw"),
                            'processed': oshelper.pathjoin(datapath, "processed", "processed.json"),
                            'arrays': oshelper.pathjoin(datapath, "arrays")}
-        self.games = {'games': []}
+        self.games = {'games': [],
+                      'length': 0}
 
         oshelper.create_if_not_exists(self.paths_dict['processed'], is_file=True)
         oshelper.create_if_not_exists(self.paths_dict['arrays'], is_file=False)
@@ -53,7 +54,8 @@ class ArrayBuilder:
 
         with open(self.paths_dict['processed'], 'w') as f:
             json.dump(self.games, f)
-        self.games['games'] = []
+        self.games = {'games': [],
+                      'length': 0}
 
     def _remove_metadata(self, rawpath):
         forfeit = "forfeits by disconnection"
@@ -68,9 +70,10 @@ class ArrayBuilder:
                                    else 1 if '0-1' in line[end:]
                                    else 0.5)
 
-                    game_dict = {'result': result,
-                                 'moves': processed_line.split(' ')}
-                    self.games['games'].append(game_dict)
+                    processed_game = {'result': result,
+                                 'moves': processed_line.strip().split(' ')}
+                    self.games['games'].append(processed_game)
+                    self.games['length'] += 1
 
     def convert_to_arrays(self):
         """
@@ -108,16 +111,12 @@ class ArrayBuilder:
 
                     try:
                         move = converter.incomplete_alg(move_str, current_color)
-                        if move is not None:
-                            move = converter.make_legal(move, data_board)
-                    except AttributeError as error:
+                        move = converter.make_legal(move, data_board)
+                        data_board.update(move)
+                    except Exception as error:
                         print(error)
                         break
-                    if move is None:
-                        print("Move is None")
-                        break
 
-                    data_board.update(move)
                     features.append(featurehelper.extract_features_from_positions(data_board))
 
         labels = featurehelper.classify_position_by_material(features)
@@ -129,5 +128,5 @@ class ArrayBuilder:
 
 
 if __name__ == '__main__':
-    builder = ArrayBuilder(os.path.abspath(os.path.join(os.pardir, os.pardir, 'data')))
+    builder = ArrayBuilder(os.path.abspath(os.path.join(os.pardir, 'data')))
     builder.process_files()

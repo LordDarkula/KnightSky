@@ -17,7 +17,7 @@ def material(positions):
     :param positions: list of all positions to create labels for
     :return: features, labels
     """
-    advantages = np.zeros((3, len(positions)), dtype=int)
+    advantages = np.zeros((len(positions), 3), dtype=int)
 
     for i, position in enumerate(positions):
 
@@ -39,6 +39,7 @@ def material(positions):
 
 
 def turn(games):
+    advantages = np.zeros([games['length'], 3])
     for game in games['games']:
         pass
 
