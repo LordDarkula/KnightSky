@@ -7,17 +7,17 @@ Helpers to make constructing features and labels easier.
 import numpy as np
 
 from chess_py import color
-from chess_py.pieces.piece_const import Piece_values
+from chess_py.pieces.piece_const import PieceValues
 
 
-def extract_features_from_positions(board):
+def extract_features_from_position(board):
     """
     Converts board to 1D numpy array consisting of
     piece values.
     :type: board: Board
     :rtype: np.array
     """
-    fit_values = Piece_values()
+    fit_values = PieceValues()
 
     # Convert board to 1D numpy array
     return np.array([fit_values.val(square, color.white) for square in board])

@@ -75,58 +75,61 @@ class ArrayBuilder:
                     self.games['games'].append(processed_game)
                     self.games['length'] += 1
 
-    def convert_to_arrays(self):
+    def convert_to_arrays(self, label_type='material'):
         """
         Converts to two arrays, X and y.
-        X is the list of all chess positions in feature_list form
-        Y is the list of evaluations in the form [good for white, draw, good for black]
+
+        X is the list of all chess positions in the form
+        [number of games, 64 (number of squares on the board)]
+
+        Y is the list of evaluations in the form
+        [number of games, 3 (good for white, draw, good for black)]
+
         Saves output in ``data/arrays`` and returns it.
 
-        :return: X and y
+        :return: features, labels
+        :rtype: tuple(np.array, np.array)
         """
-        features = []
         color_dict = {color.white: 0, color.black: 1}
 
-        with open(self.paths_dict['processed'], 'r') as processed:
-            for i, line in enumerate(processed):
-                print("On game number {}".format(i))
-                if line[0:3] == "1/2":  # Game is drawn
-                    result = [0, 1, 0]
-                    game_str = line[4:]
-                else:                   # Victor exists
-                    result = [1, 0, 0] if int(line[0:1]) == 0 else [0, 0, 1]
-                    game_str = line[2:]
-                print("Result of the game was {}".format(result))
+        with open(self.paths_dict['processed'], 'r') as f:
+            self.games = json.load(f)
+            features = []
 
-                move_list = game_str.split(' ')
-                print(move_list)
+            # resets every game
+            game_increment = 0
+
+            for game_dict in self.games['games']:
                 data_board = Board.init_default()
-                color_itr = itertools.cycle([color.white, color.black])
 
-                for move_str in move_list:
-                    current_color = next(color_itr)
-                    print(move_str)
-                    print(data_board)
-                    print(color_dict[current_color])
+                for move in game_dict['moves']:
 
                     try:
-                        move = converter.incomplete_alg(move_str, current_color)
+                        if game_increment % 2 == 0:
+                            current_color = color.white
+                        else:
+                            current_color = color.black
+                        move = converter.incomplete_alg(move, current_color)
                         move = converter.make_legal(move, data_board)
                         data_board.update(move)
                     except Exception as error:
                         print(error)
                         break
 
-                    features.append(featurehelper.extract_features_from_positions(data_board))
+                    features.append(featurehelper.extract_features_from_position(data_board))
+                    game_increment += 1
 
-        labels = featurehelper.classify_position_by_material(features)
+                game_increment = 0
 
-        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
-        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))
 
-        return features, labels
+
+        # np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
+        # np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))
+        #
+        # return features, labels
 
 
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.abspath(os.path.join(os.pardir, 'data')))
-    builder.process_files()
+    # builder.process_files()
+    builder.convert_to_arrays()
