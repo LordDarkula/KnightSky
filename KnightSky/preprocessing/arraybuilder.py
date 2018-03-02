@@ -95,6 +95,7 @@ class ArrayBuilder:
         with open(self.paths_dict['processed'], 'r') as f:
             self.games = json.load(f)
             features = []
+            labels = []
 
             # resets every game
             game_increment = 0
@@ -104,11 +105,12 @@ class ArrayBuilder:
 
                 for move in game_dict['moves']:
 
+                    if game_increment % 2 == 0:
+                        current_color = color.white
+                    else:
+                        current_color = color.black
+
                     try:
-                        if game_increment % 2 == 0:
-                            current_color = color.white
-                        else:
-                            current_color = color.black
                         move = converter.incomplete_alg(move, current_color)
                         move = converter.make_legal(move, data_board)
                         data_board.update(move)
@@ -117,16 +119,43 @@ class ArrayBuilder:
                         break
 
                     features.append(featurehelper.extract_features_from_position(data_board))
+
+                    if label_type == 'turn':
+                        if current_color == color.white:  # white has just moved
+                            labels.append([1, 0, 0])
+                        else:                             # black has just moved
+                            labels.append([0, 0, 1])
+
+                    elif label_type == 'result':
+                        if int(game_dict['result']) == 0:    # white wins
+                            labels.append([1, 0, 0])
+                        elif int(game_dict['result']) == 1:  # black wins
+                            labels.append([0, 0, 1])
+                        else:                                # draw
+                            labels.append([0, 1, 0])
+
+                    elif label_type == 'material':
+                        material_imbalance = np.sum(np.array(features[-1]))
+                        if material_imbalance > 0:    # white holds material advantage
+                            labels.append([1, 0, 0])
+                        elif material_imbalance < 0:  # black holds material advantage
+                            labels.append([0, 0, 1])
+                        else:                         # material even
+                            labels.append([0, 1, 0])
+
+                    else:
+                        raise ValueError("label_type {} is invalid "
+                                         "\nlabel_type must be \'turn\', \'result\', or \'material\'"
+                                         .format(label_type))
+
                     game_increment += 1
 
                 game_increment = 0
 
+        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
+        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))
 
-
-        # np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
-        # np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))
-        #
-        # return features, labels
+        return features, labels
 
 
 if __name__ == '__main__':
