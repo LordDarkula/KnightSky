@@ -153,7 +153,7 @@ class ArrayBuilder:
                 game_increment = 0
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
-        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels'), np.array(labels))
+        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'.format(label_type)), np.array(labels))
 
         return features, labels
 
