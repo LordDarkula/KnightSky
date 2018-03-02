@@ -7,7 +7,6 @@ Class to access all pre-processing functionality.
 import os
 import numpy as np
 import re
-import itertools
 import json
 from chess_py import *
 
@@ -16,14 +15,20 @@ from KnightSky.preprocessing.helpers import featurehelper
 
 
 class ArrayBuilder:
+    """
+    ``ArrayBuilder`` processes data and converts it into json, then numpy arrays.
+    Requires original PGN files to be from FICS database and in ``data/raw``.
+    Saves json in ``data/processed`` and numpy arrays in ``data/arrays``.
+    """
     def __init__(self, datapath):
         """
-        Creates object that processes data and converts it to numpy arrays.
-        Requires original PGN files to be from FICS database and in ``data/raw``.
-        Saves processed PGN in ``data/processed`` and np arrays in ``data/arrays``.
-        
+        Builds dictionary to store paths and create output directories in ``datapath`` if
+        they do not exist.
+
         :param: datapath: path to data folder
         :type: datapath: str
+
+        :raise: FileNotFoundError: if datapath is invalid
         """
         if not os.path.exists(datapath):
             raise FileNotFoundError("Please create /raw path and put chess data in there")
@@ -71,27 +76,30 @@ class ArrayBuilder:
                                    else 0.5)
 
                     processed_game = {'result': result,
-                                 'moves': processed_line.strip().split(' ')}
-                    self.games['games'].append(processed_game)
+                                      'moves': processed_line.strip().split(' ')}
+                    list(self.games['games']).append(processed_game)
                     self.games['length'] += 1
 
     def convert_to_arrays(self, label_type='material'):
         """
         Converts to two arrays, X and y.
 
-        X is the list of all chess positions in the form
+        ``features`` is the list of all chess positions in the form
         [number of games, 64 (number of squares on the board)]
 
-        Y is the list of evaluations in the form
+        ``labels`` is the list of evaluations in the form
         [number of games, 3 (good for white, draw, good for black)]
+
+        ``labels`` examples:
+        [0, 0, 1] if white is doing better
+        [1, 0, 0] if black is doing better
+        [0, 1, 0] if the game is even.
 
         Saves output in ``data/arrays`` and returns it.
 
         :return: features, labels
         :rtype: tuple(np.array, np.array)
         """
-        color_dict = {color.white: 0, color.black: 1}
-
         with open(self.paths_dict['processed'], 'r') as f:
             self.games = json.load(f)
             features = []
@@ -160,5 +168,5 @@ class ArrayBuilder:
 
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.abspath(os.path.join(os.pardir, 'data')))
-    # builder.process_files()
+    builder.process_files()
     builder.convert_to_arrays()
