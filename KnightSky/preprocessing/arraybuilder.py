@@ -31,7 +31,8 @@ class ArrayBuilder:
         :raise: FileNotFoundError: if datapath is invalid
         """
         if not os.path.exists(datapath):
-            raise FileNotFoundError("Please create /raw path and put chess data in there")
+            raise FileNotFoundError("{} not found. "
+                                    "Please create /raw path and put chess data in there".format(datapath))
 
         self.paths_dict = {'data': datapath,
                            'raw': oshelper.pathjoin(datapath, "raw"),
@@ -77,7 +78,7 @@ class ArrayBuilder:
 
                     processed_game = {'result': result,
                                       'moves': processed_line.strip().split(' ')}
-                    list(self.games['games']).append(processed_game)
+                    self.games['games'].append(processed_game)
                     self.games['length'] += 1
 
     def convert_to_arrays(self, label_type='material'):
@@ -108,7 +109,7 @@ class ArrayBuilder:
             # resets every game
             game_increment = 0
 
-            for game_dict in self.games['games']:
+            for i, game_dict in enumerate(self.games['games']):
                 data_board = Board.init_default()
 
                 for move in game_dict['moves']:
@@ -122,8 +123,10 @@ class ArrayBuilder:
                         move = converter.incomplete_alg(move, current_color)
                         move = converter.make_legal(move, data_board)
                         data_board.update(move)
-                    except Exception as error:
+                    except (AttributeError, AssertionError) as error:
                         print(error)
+                        print("On game {}".format(i))
+                        print(data_board, error)
                         break
 
                     features.append(featurehelper.extract_features_from_position(data_board))
@@ -157,8 +160,10 @@ class ArrayBuilder:
                                          .format(label_type))
 
                     game_increment += 1
+                    print(".", end='')
 
                 game_increment = 0
+                print("On game number {}".format(i))
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'.format(label_type)), np.array(labels))
@@ -169,4 +174,4 @@ class ArrayBuilder:
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.abspath(os.path.join(os.pardir, 'data')))
     builder.process_files()
-    builder.convert_to_arrays()
+    print(builder.convert_to_arrays())
