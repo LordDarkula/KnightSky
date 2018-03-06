@@ -2,10 +2,10 @@
 __pycache__/
 .idea/
 venv/
-tmp/
-data/processed
-data/arrays
-
 *.icloud
 *.DS_Store
 *.pyc
+
+tmp/
+data/processed
+data/arrays
