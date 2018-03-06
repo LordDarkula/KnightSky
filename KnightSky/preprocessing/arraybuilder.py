@@ -10,6 +10,7 @@ import re
 import json
 from chess_py import *
 
+from definitions import ROOT_DIR
 from KnightSky.helpers import oshelper
 from KnightSky.preprocessing.helpers import featurehelper
 
@@ -172,6 +173,6 @@ class ArrayBuilder:
 
 
 if __name__ == '__main__':
-    builder = ArrayBuilder(os.path.abspath(os.path.join(os.pardir, 'data')))
+    builder = ArrayBuilder(ROOT_DIR)
     builder.process_files()
     print(builder.convert_to_arrays())
