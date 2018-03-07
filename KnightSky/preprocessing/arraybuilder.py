@@ -173,6 +173,6 @@ class ArrayBuilder:
 
 
 if __name__ == '__main__':
-    builder = ArrayBuilder(ROOT_DIR)
+    builder = ArrayBuilder(os.path.join(ROOT_DIR, 'data'))
     builder.process_files()
     print(builder.convert_to_arrays())
