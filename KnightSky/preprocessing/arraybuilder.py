@@ -113,6 +113,8 @@ class ArrayBuilder:
             for i, game_dict in enumerate(self.games['games']):
                 data_board = Board.init_default()
 
+                print("On game number {}".format(i))
+
                 for move in game_dict['moves']:
 
                     if game_increment % 2 == 0:
@@ -120,15 +122,9 @@ class ArrayBuilder:
                     else:
                         current_color = color.black
 
-                    try:
-                        move = converter.incomplete_alg(move, current_color)
-                        move = converter.make_legal(move, data_board)
-                        data_board.update(move)
-                    except (AttributeError, AssertionError) as error:
-                        print(error)
-                        print("On game {}".format(i))
-                        print(data_board, error)
-                        break
+                    move = converter.incomplete_alg(move, current_color)
+                    move = converter.make_legal(move, data_board)
+                    data_board.update(move)
 
                     features.append(featurehelper.extract_features_from_position(data_board))
 
@@ -164,7 +160,8 @@ class ArrayBuilder:
                     print(".", end='')
 
                 game_increment = 0
-                print("On game number {}".format(i))
+                print()
+                print(data_board)
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'.format(label_type)), np.array(labels))
