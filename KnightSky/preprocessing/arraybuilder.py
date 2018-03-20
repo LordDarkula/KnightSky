@@ -110,10 +110,13 @@ class ArrayBuilder:
             # resets every game
             game_increment = 0
 
+            # decrements when Exception is raised
+            number_of_games = len(self.games['games'])
+
             for i, game_dict in enumerate(self.games['games']):
                 data_board = Board.init_default()
 
-                print("On game number {}".format(i))
+                print("On game number {} out of {}".format(i, number_of_games))
 
                 for move in game_dict['moves']:
 
@@ -121,10 +124,14 @@ class ArrayBuilder:
                         current_color = color.white
                     else:
                         current_color = color.black
-
-                    move = converter.incomplete_alg(move, current_color)
-                    move = converter.make_legal(move, data_board)
-                    data_board.update(move)
+                    try:
+                        move = converter.incomplete_alg(move, current_color, data_board)
+                        move = converter.make_legal(move, data_board)
+                        data_board.update(move)
+                    except ValueError as e:
+                        print("\n" + str(e))
+                        number_of_games -= 1
+                        break
 
                     features.append(featurehelper.extract_features_from_position(data_board))
 
@@ -163,13 +170,13 @@ class ArrayBuilder:
                 print()
                 print(data_board)
 
-        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features'), np.array(features))
+        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features-{}'.format(label_type)), np.array(features))
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'.format(label_type)), np.array(labels))
 
-        return features, labels
+        return np.array(features), np.array(labels)
 
 
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.join(ROOT_DIR, 'data'))
     builder.process_files()
-    print(builder.convert_to_arrays())
+    print(builder.convert_to_arrays(label_type='turn'))
