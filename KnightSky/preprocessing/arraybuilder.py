@@ -124,14 +124,10 @@ class ArrayBuilder:
                         current_color = color.white
                     else:
                         current_color = color.black
-                    try:
-                        move = converter.incomplete_alg(move, current_color, data_board)
-                        move = converter.make_legal(move, data_board)
-                        data_board.update(move)
-                    except ValueError as e:
-                        print("\n" + str(e))
-                        number_of_games -= 1
-                        break
+                    print("Raw: {}".format(move))
+                    move = converter.incomplete_alg(move, current_color, data_board)
+                    move = converter.make_legal(move, data_board)
+                    data_board.update(move)
 
                     features.append(featurehelper.extract_features_from_position(data_board))
 
@@ -179,4 +175,6 @@ class ArrayBuilder:
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.join(ROOT_DIR, 'data'))
     builder.process_files()
+    print(builder.convert_to_arrays(label_type='material'))
+    print(builder.convert_to_arrays(label_type='result'))
     print(builder.convert_to_arrays(label_type='turn'))
