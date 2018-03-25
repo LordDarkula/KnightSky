@@ -27,7 +27,7 @@ class BoardEvaluator:
     def __init__(self, tmp_path):
         # Tensorboard Setup
         self.tmp_path = tmp_path
-        self.save_path = oshelper.pathjoin(self.tmp_path, 'saved', 'model')
+        self.save_path = oshelper.pathjoin(self.tmp_path, 'saved', 'model.ckpt')
         oshelper.create_if_not_exists(tmp_path, is_file=False)
         self.tb_manager = TensorboardManager(tmp_path)
 
@@ -80,7 +80,7 @@ class BoardEvaluator:
         with tf.name_scope("train"):
             self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(cross_entropy)
 
-        self.evaluate = tf.argmax(y_predicted, 1)
+        self.evaluate = tf.argmax(y_predicted, 1, name='evaluate')
 
         with tf.name_scope("accuracy"):
             correct_prediction = tf.equal(tf.argmax(y_predicted, 1), tf.argmax(self.y_placeholder, 1))
@@ -118,6 +118,7 @@ class BoardEvaluator:
             print("Session starting")
 
             # Initialization
+
             merged_summary = tf.summary.merge_all()
             writer = tf.summary.FileWriter(self.tb_manager.tensorboard_path)
             writer.add_graph(sess.graph)
@@ -148,20 +149,20 @@ class BoardEvaluator:
 
                 print("Test accuracy {}".format(self.accuracy.eval(accuracy_dict)))
 
+            tf.add_to_collection('evaluate', self.evaluate)
             saver.save(sess, self.save_path)
 
     def restore(self, positions):
-        tf.reset_default_graph()
-
-        self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
+        # self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
 
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
-            saver.restore(sess, oshelper.pathjoin(self.save_path, 'model.ckpt'))
+            saver.restore(sess, self.save_path)
+            self.evaluate = tf.get_collection('evaluate')[0]
             advantages = self.evaluate.eval(feed_dict={self.X_placeholder: positions,
                                                        self.keep_prob_placeholder: 1.0})
-            print("Position evaluation is {}".format(advantages))
+            print("Position evaluation is {}".format(len(advantages)))
             return advantages
 
 
@@ -177,6 +178,6 @@ if __name__ == '__main__':
     evaluator = BoardEvaluator(tmp_folder_path)
     evaluator.train_on(training_data=(features, labels),
                        testing_data=(test_features, test_labels),
-                       epochs=10,
+                       epochs=1,
                        learning_rate=0.00001)
     evaluator.restore(test_features)
