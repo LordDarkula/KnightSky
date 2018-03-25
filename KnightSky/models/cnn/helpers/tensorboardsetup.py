@@ -28,7 +28,7 @@ class TensorboardManager:
 
     @property
     def tensorboard_path(self):
-        return oshelper.pathjoin(self._path, self.run_number)
+        return os.path.join(self._path, str(self.run_number))
 
     @property
     def run_number(self):

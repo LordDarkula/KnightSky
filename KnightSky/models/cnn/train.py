@@ -4,9 +4,11 @@
 Constructs convolutional neural network
 """
 
+import os
 import numpy as np
 import tensorflow as tf
 
+from definitions import ROOT_DIR
 from KnightSky.helpers import oshelper
 from KnightSky.models.cnn.helpers.tensorboardsetup import TensorboardManager
 from KnightSky.models.cnn.helpers import layers
@@ -86,8 +88,8 @@ class BoardEvaluator:
             tf.summary.scalar("accuracy", self.accuracy)
 
     def train_on(self,
-                 location,
-                 array_folder_name='arrays',
+                 training_data,
+                 testing_data,
                  epochs=300,
                  batch_size=100,
                  learning_rate=0.5,
@@ -107,14 +109,9 @@ class BoardEvaluator:
         :param train_keep_prob: 
         :param test_keep_prob: 
         """
-        if isinstance(location, str):
-            features = np.load(oshelper.pathjoin(location, array_folder_name, 'features.npy'))
-            labels = np.load(oshelper.pathjoin(location, array_folder_name, 'labels.npy'))
-        else:
-            features, labels = location
 
-        train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
-
+        positions, advantages = training_data
+        test_positions, test_advantages = testing_data
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
@@ -130,7 +127,7 @@ class BoardEvaluator:
             # Training loop
             for epoch in range(epochs):
                 for i, (batch_X, batch_y) in \
-                        enumerate(split.next_batch(train_features, train_labels, batch_size=batch_size)):
+                        enumerate(split.next_batch(positions, advantages, batch_size=batch_size)):
 
                     # Dict fed to train model
                     train_dict = {self.X_placeholder:         batch_X,
@@ -145,33 +142,41 @@ class BoardEvaluator:
                         s = sess.run(merged_summary, feed_dict=train_dict)
                         writer.add_summary(s, i)
 
-                accuracy_dict = {self.X_placeholder:         train_features,
-                                 self.y_placeholder:         train_labels,
-                                 self.keep_prob_placeholder: train_keep_prob}
+                accuracy_dict = {self.X_placeholder:         test_positions,
+                                 self.y_placeholder:         test_advantages,
+                                 self.keep_prob_placeholder: test_keep_prob}
 
-                print("Train accuracy {}".format(self.accuracy.eval(accuracy_dict)))
-
-                accuracy_dict[self.keep_prob_placeholder] = test_keep_prob
-                print("Test  accuracy {}".format(self.accuracy.eval(accuracy_dict)))
+                print("Test accuracy {}".format(self.accuracy.eval(accuracy_dict)))
 
             saver.save(sess, self.save_path)
 
-    def eval(self, features):
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            return float(self.evaluate.eval(feed_dict={self.X_placeholder: features,
-                                                       self.keep_prob_placeholder: 1.0},
-                                            session=sess))
+    def restore(self, positions):
+        tf.reset_default_graph()
 
-    def restore(self):
-        # tf.reset_default_graph()
-        #
-        # self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
-        #
-        # saver = tf.train.Saver()
-        #
-        # with tf.Session() as sess:
-        #     saver.restore(sess, oshelper.pathjoin(self.tmp_path, 'model.ckpt'))
-        #     print("Position evaluation is {}".format(self.evaluate.eval(feed_dict={self.X_placeholder: features,
-        #                                              self.keep_prob_placeholder: 1.0})))
-        pass
+        self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
+
+        saver = tf.train.Saver()
+
+        with tf.Session() as sess:
+            saver.restore(sess, oshelper.pathjoin(self.save_path, 'model.ckpt'))
+            advantages = self.evaluate.eval(feed_dict={self.X_placeholder: positions,
+                                                       self.keep_prob_placeholder: 1.0})
+            print("Position evaluation is {}".format(advantages))
+            return advantages
+
+
+if __name__ == '__main__':
+    tmp_folder_path = os.path.join(ROOT_DIR, 'tmp')
+    data_path = os.path.join(ROOT_DIR, 'data')
+
+    features = np.load(os.path.join(data_path, 'arrays', 'features-result.npy'))
+    labels = np.load(oshelper.pathjoin(data_path, 'arrays', 'labels-result.npy'))
+
+    train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
+
+    evaluator = BoardEvaluator(tmp_folder_path)
+    evaluator.train_on(training_data=(features, labels),
+                       testing_data=(test_features, test_labels),
+                       epochs=10,
+                       learning_rate=0.00001)
+    evaluator.restore(test_features)
