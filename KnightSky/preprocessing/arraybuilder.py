@@ -116,6 +116,10 @@ class ArrayBuilder:
             for i, game_dict in enumerate(self.games['games']):
                 data_board = Board.init_default()
 
+                # features and labels for each game
+                game_features = []
+                game_labels = []
+
                 print("On game number {} out of {}".format(i, number_of_games))
 
                 for move in game_dict['moves']:
@@ -129,30 +133,30 @@ class ArrayBuilder:
                     move = converter.make_legal(move, data_board)
                     data_board.update(move)
 
-                    features.append(featurehelper.extract_features_from_position(data_board))
+                    game_features.append(featurehelper.extract_features_from_position(data_board))
 
                     if label_type == 'turn':
                         if current_color == color.white:  # white has just moved
-                            labels.append([1, 0, 0])
+                            game_labels.append([1, 0, 0])
                         else:                             # black has just moved
-                            labels.append([0, 0, 1])
+                            game_labels.append([0, 0, 1])
 
                     elif label_type == 'result':
                         if int(game_dict['result']) == 0:    # white wins
-                            labels.append([1, 0, 0])
+                            game_labels.append([1, 0, 0])
                         elif int(game_dict['result']) == 1:  # black wins
-                            labels.append([0, 0, 1])
+                            game_labels.append([0, 0, 1])
                         else:                                # draw
-                            labels.append([0, 1, 0])
+                            game_labels.append([0, 1, 0])
 
                     elif label_type == 'material':
-                        material_imbalance = np.sum(np.array(features[-1]))
+                        material_imbalance = np.sum(np.array(game_features[-1]))
                         if material_imbalance > 0:    # white holds material advantage
-                            labels.append([1, 0, 0])
+                            game_labels.append([1, 0, 0])
                         elif material_imbalance < 0:  # black holds material advantage
-                            labels.append([0, 0, 1])
+                            game_labels.append([0, 0, 1])
                         else:                         # material even
-                            labels.append([0, 1, 0])
+                            game_labels.append([0, 1, 0])
 
                     else:
                         raise ValueError("label_type {} is invalid "
@@ -162,7 +166,11 @@ class ArrayBuilder:
                     game_increment += 1
                     print(".", end='')
 
+                # append each game's features and labels to main features and labels arrays
+                features.append(game_features)
+                labels.append(game_labels)
                 game_increment = 0
+
                 print()
                 print(data_board)
 
@@ -175,6 +183,6 @@ class ArrayBuilder:
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.join(ROOT_DIR, 'data'))
     builder.process_files()
-    print(builder.convert_to_arrays(label_type='material'))
-    print(builder.convert_to_arrays(label_type='result'))
+    print(builder.convert_to_arrays(label_type='material')[0].shape)
+    print(builder.convert_to_arrays(label_type='result')[1].shape)
     print(builder.convert_to_arrays(label_type='turn'))
