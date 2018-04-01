@@ -72,6 +72,8 @@ class BoardEvaluator:
 
         y_predicted = tf.matmul(model, w_out) + b_out
 
+        self.evaluate = tf.argmax(y_predicted, 1, name='evaluate')
+
         with tf.name_scope("cross_entropy"):
             cross_entropy = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits(labels=self.y_placeholder, logits=y_predicted))
@@ -79,8 +81,6 @@ class BoardEvaluator:
 
         with tf.name_scope("train"):
             self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(cross_entropy)
-
-        self.evaluate = tf.argmax(y_predicted, 1, name='evaluate')
 
         with tf.name_scope("accuracy"):
             correct_prediction = tf.equal(tf.argmax(y_predicted, 1), tf.argmax(self.y_placeholder, 1))
@@ -100,9 +100,9 @@ class BoardEvaluator:
         or the path to a folder containing 2 npy files 
         wih X named ``features.npy`` and y named ``labels.npy``.
         
-        :param location: training data
-        :type: str or np.array
-        :param array_folder_name: name of folder where arrays are stored. Defaults to ``arrays``
+        :param training_data: data used to train the network
+        :type: Tuple[np.array, np.array]
+        :param testing_data: data used to test the neural network
         :param epochs: Number of epochs to run when training. Defaults to 300.
         :param batch_size: Size of individual batches to 
         :param learning_rate: 
@@ -114,6 +114,8 @@ class BoardEvaluator:
         test_positions, test_advantages = testing_data
         saver = tf.train.Saver()
 
+        # sess_config = tf.ConfigProto(log_device_placement=True)
+        # sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
         with tf.Session() as sess:
             print("Session starting")
 
@@ -178,6 +180,7 @@ if __name__ == '__main__':
     evaluator = BoardEvaluator(tmp_folder_path)
     evaluator.train_on(training_data=(features, labels),
                        testing_data=(test_features, test_labels),
-                       epochs=1,
-                       learning_rate=0.00001)
+                       epochs=20,
+                       learning_rate=0.01)
     evaluator.restore(test_features)
+
