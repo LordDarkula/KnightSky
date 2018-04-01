@@ -1,11 +1,11 @@
 # KnightSky
-A work in progress chess engine
+Deep Learning Chess Engine
 
 ## Introduction
 KnightSky is a self improving chess engine built on [chess_py](https://github.com/LordDarkula/chess_py).
 
 ## Installation
-KnightSky is dependent on NumPy and chess_py. Install libraries by running the following,
+Install requirements
 
 ```shell
 $ pip install -r requirements.txt
