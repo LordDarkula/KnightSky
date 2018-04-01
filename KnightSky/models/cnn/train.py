@@ -39,7 +39,7 @@ class BoardEvaluator:
 
         # Model creation
         self.optimizer = None
-        self.evaluate = None
+        self.predict_op = None
         self.accuracy = None
         self._create_model()
 
@@ -71,8 +71,7 @@ class BoardEvaluator:
         b_out = var.bias_variable([3])
 
         y_predicted = tf.matmul(model, w_out) + b_out
-
-        self.evaluate = tf.argmax(y_predicted, 1, name='evaluate')
+        self.predict_op = y_predicted
 
         with tf.name_scope("cross_entropy"):
             cross_entropy = tf.reduce_mean(
@@ -87,14 +86,14 @@ class BoardEvaluator:
             self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             tf.summary.scalar("accuracy", self.accuracy)
 
-    def train_on(self,
-                 training_data,
-                 testing_data,
-                 epochs=300,
-                 batch_size=100,
-                 learning_rate=0.5,
-                 train_keep_prob=0.5,
-                 test_keep_prob=1.0):
+    def fit(self,
+            training_data,
+            testing_data,
+            epochs=300,
+            batch_size=100,
+            learning_rate=0.5,
+            train_keep_prob=0.5,
+            test_keep_prob=1.0):
         """
         Trains on data in the form of a tuple of np arrays stored as (X, y),
         or the path to a folder containing 2 npy files 
@@ -151,20 +150,18 @@ class BoardEvaluator:
 
                 print("Test accuracy {}".format(self.accuracy.eval(accuracy_dict)))
 
-            tf.add_to_collection('evaluate', self.evaluate)
+            # tf.add_to_collection('evaluate', self.evaluate)
             saver.save(sess, self.save_path)
 
-    def restore(self, positions):
-        # self.evaluate = tf.get_variable('evaluate', shape=[self.NUMBER_OF_CLASSES])
-
+    def predict(self, positions):
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
             saver.restore(sess, self.save_path)
-            self.evaluate = tf.get_collection('evaluate')[0]
-            advantages = self.evaluate.eval(feed_dict={self.X_placeholder: positions,
-                                                       self.keep_prob_placeholder: 1.0})
-            print("Position evaluation is {}".format(len(advantages)))
+            # self.evaluate = tf.get_collection('evaluate')[0]
+            advantages = self.predict_op.eval(feed_dict={self.X_placeholder: positions,
+                                                         self.keep_prob_placeholder: 1.0})
+            print("Position evaluation is {}".format(advantages))
             return advantages
 
 
@@ -178,9 +175,8 @@ if __name__ == '__main__':
     train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
 
     evaluator = BoardEvaluator(tmp_folder_path)
-    evaluator.train_on(training_data=(features, labels),
-                       testing_data=(test_features, test_labels),
-                       epochs=20,
-                       learning_rate=0.01)
-    evaluator.restore(test_features)
-
+    evaluator.fit(training_data=(features, labels),
+                  testing_data=(test_features, test_labels),
+                  epochs=20,
+                  learning_rate=0.01)
+    evaluator.predict(test_features)
