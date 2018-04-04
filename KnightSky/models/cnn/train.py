@@ -29,24 +29,16 @@ class BoardEvaluator:
     LENGTH = 8
     NUMBER_OF_CLASSES = 3
 
-    def __init__(self, tmp_path):
-        # Tensorboard Setup
-        self.tmp_path = tmp_path
-        self.save_path = oshelper.pathjoin(self.tmp_path, 'saved', 'model.ckpt')
-        oshelper.create_if_not_exists(tmp_path, is_file=False)
-        self.tb_manager = TensorboardManager(tmp_path)
-
-        # Placholder initialization
-        self.X_placeholder = tf.placeholder(tf.float32, [None, self.BOARD_SIZE], name="X")
-        self.y_placeholder = tf.placeholder(tf.float32, [None, self.NUMBER_OF_CLASSES], name="y")
-        self.keep_prob_placeholder = tf.placeholder(tf.float32)
-        self.learning_rate = tf.placeholder(tf.float32)
-
-        # Model creation
-        self.optimizer = None
-        self.predict_op = None
-        self.accuracy = None
-        self._create_model()
+    def __init__(self):
+        self.model = Sequential([
+            Dense(32, input_dim=64),
+            Activation('relu'),
+            Dense(3),
+            Activation('softmax')
+        ])
+        self.model.compile(optimizer=Adam(),
+                           loss='categorical_crossentropy',
+                           metrics=['accuracy'])
 
     @classmethod
     def from_saved(cls):
@@ -148,14 +140,11 @@ if __name__ == '__main__':
     tmp_folder_path = os.path.join(ROOT_DIR, 'tmp')
     data_path = os.path.join(ROOT_DIR, 'data')
 
-    features = np.load(os.path.join(data_path, 'arrays', 'features-result.npy'))
-    labels = np.load(oshelper.pathjoin(data_path, 'arrays', 'labels-result.npy'))
-
+    features = np.load(os.path.join(data_path, 'arrays', 'features.npy'))
+    labels = np.load(oshelper.pathjoin(data_path, 'arrays', 'labels.npy'))
     train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
 
-    evaluator = BoardEvaluator(tmp_folder_path)
-    evaluator.fit(training_data=(features, labels),
-                  testing_data=(test_features, test_labels),
-                  epochs=20,
-                  learning_rate=0.01)
-    evaluator.predict(test_features)
+    evaluator = BoardEvaluator()
+    evaluator.model.fit(train_features, train_labels, batch_size=10, epochs=5)
+    print(evaluator.model.evaluate(test_features, test_labels))
+
