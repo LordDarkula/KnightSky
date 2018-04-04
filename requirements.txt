@@ -1,3 +1,4 @@
 chess_py
 numpy
 tensorflow
+keras

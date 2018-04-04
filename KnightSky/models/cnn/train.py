@@ -8,6 +8,11 @@ import os
 import numpy as np
 import tensorflow as tf
 
+from keras.models import Sequential
+from keras.layers import Dense, Activation
+from keras.optimizers import Adam
+from keras.losses import categorical_crossentropy
+
 from definitions import ROOT_DIR
 from KnightSky.helpers import oshelper
 from KnightSky.models.cnn.helpers.tensorboardsetup import TensorboardManager
@@ -48,43 +53,17 @@ class BoardEvaluator:
         pass
 
     def _create_model(self):
-        X = tf.reshape(self.X_placeholder, [-1, self.LENGTH, self.LENGTH, 1])
+        model = Sequential([
+            Dense(32, input_shape=(None, 64)),
+            Activation('relu'),
+            Dense(3),
+            Activation('softmax')
+        ])
+        model.compile(optimizer=Adam(),
+                      loss='categorical_crossentropy',
+                      metrics=['accuracy'])
 
-        conv1 = {'weights': var.weight_variable([4, 4, 1, 64]),
-                 'biases':  var.bias_variable([64])}
-        model = layers.conv_layer(X, conv1['weights'], conv1['biases'], name='conv1')
 
-        conv2 = {'weights': var.weight_variable([2, 2, 64, 64]),
-                 'biases':  var.bias_variable([64])}
-        model = layers.conv_layer(model, conv2['weights'], conv2['biases'], name='conv2')
-
-        model = tf.reshape(model, [-1, 2*2*self.BOARD_SIZE])
-
-        w1 = var.weight_variable([2*2*self.BOARD_SIZE, 1024])
-        b1 = var.bias_variable([1024])
-
-        model = layers.relu_layer(model, w1, b1, name='fc1')
-
-        model = tf.nn.dropout(model, self.keep_prob_placeholder)
-
-        w_out = var.weight_variable([1024, 3])
-        b_out = var.bias_variable([3])
-
-        y_predicted = tf.matmul(model, w_out) + b_out
-        self.predict_op = y_predicted
-
-        with tf.name_scope("cross_entropy"):
-            cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits(labels=self.y_placeholder, logits=y_predicted))
-            tf.summary.scalar('cross_entropy', cross_entropy)
-
-        with tf.name_scope("train"):
-            self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(cross_entropy)
-
-        with tf.name_scope("accuracy"):
-            correct_prediction = tf.equal(tf.argmax(y_predicted, 1), tf.argmax(self.y_placeholder, 1))
-            self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-            tf.summary.scalar("accuracy", self.accuracy)
 
     def fit(self,
             training_data,
