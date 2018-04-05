@@ -82,9 +82,20 @@ class ArrayBuilder:
                     self.games['games'].append(processed_game)
                     self.games['length'] += 1
 
-    def convert_to_arrays(self, label_type='material'):
+    def convert_to_arrays(self, label_type='material', split_games=False):
         """
-        Converts to two arrays, X and y.
+        Converts json dict of moves in algebraic notation for a set of games to features and labels
+        to feed into a neural network.
+
+        :param label_type: Specify how to calculate which player has the advantage
+            *'material'* - whoever has more material is winning
+            *'result'*   - the victor is winning
+            *'turn'*     - whoever's turn it is is winning
+        :type label_type: str
+
+        :param split_games: Specify whether to split up features and labels by game.
+        Useful for recurrent neural networks.
+        :type split_games: str
 
         ``features`` is the list of all chess positions in the form
         [number of games, 64 (number of squares on the board)]
@@ -100,7 +111,7 @@ class ArrayBuilder:
         Saves output in ``data/arrays`` and returns it.
 
         :return: features, labels
-        :rtype: tuple(np.array, np.array)
+        :rtype: tuple[np.array, np.array] or if split_games == True, tuple[list[np.array], list[np.array]]
         """
         with open(self.paths_dict['processed'], 'r') as f:
             self.games = json.load(f)
