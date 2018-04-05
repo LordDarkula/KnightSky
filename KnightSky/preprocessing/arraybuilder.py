@@ -137,26 +137,26 @@ class ArrayBuilder:
 
                     if label_type == 'turn':
                         if current_color == color.white:  # white has just moved
-                            game_labels.append([1, 0, 0])
+                            game_labels.append(np.array([1, 0, 0]))
                         else:                             # black has just moved
-                            game_labels.append([0, 0, 1])
+                            game_labels.append(np.array([0, 0, 1]))
 
                     elif label_type == 'result':
                         if int(game_dict['result']) == 0:    # white wins
-                            game_labels.append([1, 0, 0])
+                            game_labels.append(np.array([1, 0, 0]))
                         elif int(game_dict['result']) == 1:  # black wins
-                            game_labels.append([0, 0, 1])
+                            game_labels.append(np.array([0, 0, 1]))
                         else:                                # draw
-                            game_labels.append([0, 1, 0])
+                            game_labels.append(np.array([0, 1, 0]))
 
                     elif label_type == 'material':
                         material_imbalance = np.sum(np.array(game_features[-1]))
                         if material_imbalance > 0:    # white holds material advantage
-                            game_labels.append([1, 0, 0])
+                            game_labels.append(np.array([1, 0, 0]))
                         elif material_imbalance < 0:  # black holds material advantage
-                            game_labels.append([0, 0, 1])
+                            game_labels.append(np.array([0, 0, 1]))
                         else:                         # material even
-                            game_labels.append([0, 1, 0])
+                            game_labels.append(np.array([0, 1, 0]))
 
                     else:
                         raise ValueError("label_type {} is invalid "
@@ -167,8 +167,8 @@ class ArrayBuilder:
                     print(".", end='')
 
                 # append each game's features and labels to main features and labels arrays
-                features.append(game_features)
-                labels.append(game_labels)
+                features.append(np.array(game_features))
+                labels.append(np.array(game_labels))
                 game_increment = 0
 
                 print()
