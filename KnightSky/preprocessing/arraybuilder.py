@@ -73,9 +73,9 @@ class ArrayBuilder:
                     end = line.index('{')
                     processed_line = line[:end].replace('+', '').replace('#', '')
                     processed_line = re.sub(r'[1-9][0-9]*\.\s', '', processed_line)
-                    result = float(0 if '1-0' in line[end:]
-                                   else 1 if '0-1' in line[end:]
-                                   else 0.5)
+                    result = 0 if '1-0' in line[end:] \
+                        else 2 if '0-1' in line[end:] \
+                        else 1
 
                     processed_game = {'result': result,
                                       'moves': processed_line.strip().split(' ')}
@@ -138,12 +138,14 @@ class ArrayBuilder:
                             labels.append([0, 0, 1])
 
                     elif label_type == 'result':
-                        if int(game_dict['result']) == 0:    # white wins
+                        if game_dict['result'] == 0:    # white wins
                             labels.append([1, 0, 0])
-                        elif int(game_dict['result']) == 1:  # black wins
+                        elif game_dict['result'] == 2:  # black wins
                             labels.append([0, 0, 1])
-                        else:                                # draw
+                        elif game_dict['result'] == 1:  # draw
                             labels.append([0, 1, 0])
+                        else:
+                            raise ValueError("Game result {} invalid".format(game_dict['result']))
 
                     elif label_type == 'material':
                         material_imbalance = np.sum(np.array(features[-1]))
