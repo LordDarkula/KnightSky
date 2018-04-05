@@ -8,9 +8,9 @@ import os
 import numpy as np
 
 from keras.models import Sequential
-from keras.layers import Dense, Activation
+from keras.layers import Dense, Flatten, Reshape
+from keras.layers import Conv2D
 from keras.optimizers import Adam
-from keras.losses import categorical_crossentropy
 
 from definitions import ROOT_DIR
 from KnightSky.helpers import oshelper
@@ -30,29 +30,29 @@ class BoardEvaluator:
 
     def __init__(self):
         self.model = Sequential([
-            Dense(32, input_dim=64),
-            Activation('relu'),
-            Dense(3),
-            Activation('softmax')
+            Reshape(input_shape=(64,), target_shape=(8, 8, 1)),
+            Conv2D(16, (4, 4), activation='relu'),
+            Flatten(),
+            Dense(3, activation='softmax'),
         ])
         self.model.compile(optimizer=Adam(),
                            loss='categorical_crossentropy',
                            metrics=['accuracy'])
 
+    def fit(self, game_features, game_labels):
+        positions = []
+        advantages = []
+        for index, game in enumerate(game_features):
+            for position in game:
+                positions.append(position)
+            for advantage in game_labels[index]:
+                advantages.append(advantage)
+
+        self.model.fit(np.array(positions), np.array(advantages), batch_size=100, epochs=5)
+
     @classmethod
     def from_saved(cls):
         pass
-
-    def _create_model(self):
-        model = Sequential([
-            Dense(32, input_shape=(None, 64)),
-            Activation('relu'),
-            Dense(3),
-            Activation('softmax')
-        ])
-        model.compile(optimizer=Adam(),
-                      loss='categorical_crossentropy',
-                      metrics=['accuracy'])
 
 
 if __name__ == '__main__':
@@ -67,6 +67,7 @@ if __name__ == '__main__':
     train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
 
     evaluator = BoardEvaluator()
-    print(np.array(train_features[0]).shape)
-    evaluator.model.fit(np.array(train_features[0]), np.array(train_labels[0]), batch_size=10, epochs=20)
-    print(evaluator.model.evaluate(np.array(test_features[0]), np.array(test_labels[0])))
+    evaluator.fit(np.array(train_features), np.array(train_labels))
+    print(evaluator.model.evaluate(np.array(test_features[2]), np.array(test_labels[2])))
+    print(np.array(test_labels[2]))
+    print(evaluator.model.predict(np.array(test_features[2])))
