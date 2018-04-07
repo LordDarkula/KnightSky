@@ -82,16 +82,20 @@ class ArrayBuilder:
                     self.games['games'].append(processed_game)
                     self.games['length'] += 1
 
-    def _moves_to_positions(self, move_sequence):
+    @staticmethod
+    def _moves_to_positions_and_labels(move_sequence, result):
         """
-        Converts sequence of moves stored in algebraic notation to array of positions
+        Converts sequence of moves stored in algebraic notation to array of positions and advantages
         by playing those moves and recording the state of the board after each move.
         Board initialized in a default state.
 
         :param move_sequence: sequence of moves in algebraic notation
         :type move_sequence: Iterable[str]
 
-        :return: array of 1D board features
+        :param result: result of game (0, 1, or 2)
+        :type result: int
+
+        :return: array of 1D board features, 1D array of results of either 0, 1, 2
         :rtype: np.array
         """
         processing_board = Board.init_default()
@@ -102,24 +106,22 @@ class ArrayBuilder:
                                                        ROOK_VALUE=4,
                                                        QUEEN_VALUE=5)
         positions = np.zeros([len(list(move_sequence)), 64], dtype=np.int)
+        advantages = np.zeros([len(move_sequence)], dtype=np.int)
 
         for index, algebraic_move_str in enumerate(move_sequence):
             move = converter.short_alg(algebraic_move_str, current_color, processing_board)
             processing_board.update(move)
-            positions[index] = featurehelper.extract_features_from_position(processing_board, piece_id)
 
+            positions[index] = featurehelper.extract_features_from_position(processing_board, piece_id)
+            advantages[index] = result
+
+        print(processing_board)
         return positions
 
-    def convert_to_arrays(self, label_type='material', split_games=False):
+    def convert_to_arrays(self, split_games=False):
         """
         Converts json dict of moves in algebraic notation for a set of games to features and labels
         to feed into a neural network.
-
-        :param label_type: Specify how to calculate which player has the advantage
-            *'material'* - whoever has more material is winning
-            *'result'*   - the victor is winning
-            *'turn'*     - whoever's turn it is is winning
-        :type label_type: str
 
         :param split_games: Specify whether to split up features and labels by game.
         Useful for recurrent neural networks.
@@ -143,68 +145,24 @@ class ArrayBuilder:
         """
         with open(self.paths_dict['processed'], 'r') as f:
             self.games = json.load(f)
-            if split_games:
-                features = [self._moves_to_positions(game) for game in self.games['games']]
+            number_of_games = len(self.games['games'])
 
-            features = []
-            labels = []
-
-            # resets every game
-            game_increment = 0
-
-            for i, game_dict in enumerate(self.games['games']):
-                data_board = Board.init_default()
-
-                for move in game_dict['moves']:
-
-                    if game_increment % 2 == 0:
-                        current_color = color.white
-                    else:
-                        current_color = color.black
-                    print("Raw: {}".format(move))
-                    move = converter.incomplete_alg(move, current_color, data_board)
-                    move = converter.make_legal(move, data_board)
-                    data_board.update(move)
-
-                    features.append(featurehelper.extract_features_from_position(data_board))
-
-                    if label_type == 'turn':
-                        if current_color == color.white:  # white has just moved
-                            labels.append([1, 0, 0])
-                        else:                             # black has just moved
-                            labels.append([0, 0, 1])
-
-                    elif label_type == 'result':
-                        if int(game_dict['result']) == 0:    # white wins
-                            labels.append([1, 0, 0])
-                        elif int(game_dict['result']) == 1:  # black wins
-                            labels.append([0, 0, 1])
-                        else:                                # draw
-                            labels.append([0, 1, 0])
-
-                    elif label_type == 'material':
-                        material_imbalance = np.sum(np.array(features[-1]))
-                        if material_imbalance > 0:    # white holds material advantage
-                            labels.append([1, 0, 0])
-                        elif material_imbalance < 0:  # black holds material advantage
-                            labels.append([0, 0, 1])
-                        else:                         # material even
-                            labels.append([0, 1, 0])
-
-                    else:
-                        raise ValueError("label_type {} is invalid "
-                                         "\nlabel_type must be \'turn\', \'result\', or \'material\'"
-                                         .format(label_type))
-
-                    game_increment += 1
-                    print(".", end='')
-
-                game_increment = 0
+            features, labels = [], []
+            for index, game_dict in enumerate(self.games['games']):
+                print("Game {} of {}".format(index, number_of_games))
+                features_and_labels = self._moves_to_positions(game_dict['moves'], game_dict['result'])
+                features.append(features_and_labels[0])
+                labels.append(features_and_labels[1])
                 print()
-                print(data_board)
 
-        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features-{}'.format(label_type)), np.array(features))
-        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'.format(label_type)), np.array(labels))
+            if not split_games:
+                np.concatenate(features, axis=0)
+                np.concatenate(labels, axis=0)
+
+        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features-{}'
+                                  .format('split' if split_games else 'combined')), features)
+        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'
+                                  .format('split' if split_games else 'combined')), labels)
 
         return np.array(features), np.array(labels)
 
