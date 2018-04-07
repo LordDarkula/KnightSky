@@ -107,16 +107,22 @@ class ArrayBuilder:
                                                        QUEEN_VALUE=5)
         positions = np.zeros([len(list(move_sequence)), 64], dtype=np.int)
         advantages = np.zeros([len(move_sequence)], dtype=np.int)
+        symbols = ''
 
         for index, algebraic_move_str in enumerate(move_sequence):
-            move = converter.short_alg(algebraic_move_str, current_color, processing_board)
+            move = converter.incomplete_alg(algebraic_move_str, current_color, processing_board)
             processing_board.update(move)
+            symbols += move.piece.symbol
 
             positions[index] = featurehelper.extract_features_from_position(processing_board, piece_id)
             advantages[index] = result
 
+            current_color = current_color.opponent()
+
+            print(symbols)
+
         print(processing_board)
-        return positions
+        return positions, advantages
 
     def convert_to_arrays(self, split_games=False):
         """
@@ -125,7 +131,7 @@ class ArrayBuilder:
 
         :param split_games: Specify whether to split up features and labels by game.
         Useful for recurrent neural networks.
-        :type split_games: str
+        :type split_games: bool
 
         ``features`` is the list of all chess positions in the form
         [number of games, 64 (number of squares on the board)]
@@ -150,26 +156,26 @@ class ArrayBuilder:
             features, labels = [], []
             for index, game_dict in enumerate(self.games['games']):
                 print("Game {} of {}".format(index, number_of_games))
-                features_and_labels = self._moves_to_positions(game_dict['moves'], game_dict['result'])
+                features_and_labels = self._moves_to_positions_and_labels(game_dict['moves'], game_dict['result'])
                 features.append(features_and_labels[0])
                 labels.append(features_and_labels[1])
                 print()
 
             if not split_games:
-                np.concatenate(features, axis=0)
-                np.concatenate(labels, axis=0)
+                features = np.concatenate(features, axis=0)
+                labels = np.concatenate(labels, axis=0)
 
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features-{}'
                                   .format('split' if split_games else 'combined')), features)
         np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'
                                   .format('split' if split_games else 'combined')), labels)
 
-        return np.array(features), np.array(labels)
+        return features, labels
 
 
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.join(ROOT_DIR, 'data'))
     builder.process_files()
-    print(builder.convert_to_arrays(label_type='material'))
-    print(builder.convert_to_arrays(label_type='result'))
-    print(builder.convert_to_arrays(label_type='turn'))
+    arrays = builder.convert_to_arrays(split_games=False)
+    print(arrays[0].shape)
+    print(arrays[1].shape)
