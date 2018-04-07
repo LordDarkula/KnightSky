@@ -10,17 +10,20 @@ from chess_py import color
 from chess_py.pieces.piece_const import PieceValues
 
 
-def extract_features_from_position(board):
+def extract_features_from_position(board, piece_id):
     """
     Converts board to 1D numpy array consisting of
     piece values.
-    :type: board: Board
+
+    :param board: Board object from chess_py with state to be converted.
+    :type board: Board
+
+    :param piece_id: Piece values
+    :type piece_id: PieceValues
+
     :rtype: np.array
     """
-    fit_values = PieceValues()
-
-    # Convert board to 1D numpy array
-    return np.array([fit_values.val(square, color.white) for square in board])
+    return np.array([piece_id.val(square, color.white) for square in board])
 
 
 def classify_position_by_material(positions):
