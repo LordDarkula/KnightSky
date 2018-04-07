@@ -180,5 +180,5 @@ if __name__ == '__main__':
     arrays_split = builder.convert_to_arrays(split_games=True)
     print(arrays_combined[0].shape)
     print(arrays_combined[1].shape)
-    print(arrays_split[0].shape)
-    print(arrays_split[1].shape)
+    print(len(arrays_split[0]))
+    print(len(arrays_split[1]))
