@@ -7,6 +7,7 @@ Constructs convolutional neural network
 import os
 import numpy as np
 
+from keras.utils import to_categorical
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Reshape
 from keras.layers import Conv2D
@@ -14,9 +15,6 @@ from keras.optimizers import Adam
 
 from definitions import ROOT_DIR
 from KnightSky.helpers import oshelper
-from KnightSky.models.cnn.helpers.tensorboardsetup import TensorboardManager
-from KnightSky.models.cnn.helpers import layers
-from KnightSky.models.cnn.helpers import variables as var
 from KnightSky.preprocessing import split
 
 
@@ -48,7 +46,7 @@ class BoardEvaluator:
             for advantage in game_labels[index]:
                 advantages.append(advantage)
 
-        self.model.fit(np.array(positions), np.array(advantages), batch_size=100, epochs=5)
+        self.model.fit(positions, advantages, batch_size=100, epochs=5)
 
     @classmethod
     def from_saved(cls):
@@ -62,12 +60,29 @@ if __name__ == '__main__':
     tmp_folder_path = os.path.join(ROOT_DIR, 'tmp')
     data_path = os.path.join(ROOT_DIR, 'data')
 
-    features = np.load(os.path.join(data_path, 'arrays', 'features-result.npy'))
-    labels = np.load(oshelper.pathjoin(data_path, 'arrays', 'labels-result.npy'))
+    features = np.load(os.path.join(data_path, 'arrays', 'features-combined.npy'))
+    labels = np.load(oshelper.pathjoin(data_path, 'arrays', 'labels-combined.npy'))
+    print(2 in labels)
+    labels = to_categorical(labels, num_classes=3)
+    wc = 0
+    dc = 0
+    bc = 0
+    # for label in labels:
+    #     if label[0] == 1:
+    #         print('white')
+    #         wc += 1
+    #     elif label[1] == 1:
+    #         print('draw')
+    #         dc += 1
+    #     elif label[2] == 1:
+    #         print('black')
+    #         bc += 1
+
+    print("White wins {} draw {} black wins {}".format(wc, dc, bc))
     train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
 
     evaluator = BoardEvaluator()
-    evaluator.fit(np.array(train_features), np.array(train_labels))
-    print(evaluator.model.evaluate(np.array(test_features[2]), np.array(test_labels[2])))
+    evaluator.model.fit(train_features, train_labels, batch_size=32, epochs=2)
+    print(evaluator.model.evaluate(test_features, test_labels))
     print(np.array(test_labels[2]))
     print(evaluator.model.predict(np.array(test_features[2])))
