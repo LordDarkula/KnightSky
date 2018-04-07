@@ -82,6 +82,34 @@ class ArrayBuilder:
                     self.games['games'].append(processed_game)
                     self.games['length'] += 1
 
+    def _moves_to_positions(self, move_sequence):
+        """
+        Converts sequence of moves stored in algebraic notation to array of positions
+        by playing those moves and recording the state of the board after each move.
+        Board initialized in a default state.
+
+        :param move_sequence: sequence of moves in algebraic notation
+        :type move_sequence: Iterable[str]
+
+        :return: array of 1D board features
+        :rtype: np.array
+        """
+        processing_board = Board.init_default()
+        current_color = color.white
+        piece_id = piece_const.PieceValues.init_manual(PAWN_VALUE=1,
+                                                       KNIGHT_VALUE=2,
+                                                       BISHOP_VALUE=3,
+                                                       ROOK_VALUE=4,
+                                                       QUEEN_VALUE=5)
+        positions = np.zeros([len(list(move_sequence)), 64], dtype=np.int)
+
+        for index, algebraic_move_str in enumerate(move_sequence):
+            move = converter.short_alg(algebraic_move_str, current_color, processing_board)
+            processing_board.update(move)
+            positions[index] = featurehelper.extract_features_from_position(processing_board, piece_id)
+
+        return positions
+
     def convert_to_arrays(self, label_type='material', split_games=False):
         """
         Converts json dict of moves in algebraic notation for a set of games to features and labels
@@ -115,19 +143,17 @@ class ArrayBuilder:
         """
         with open(self.paths_dict['processed'], 'r') as f:
             self.games = json.load(f)
+            if split_games:
+                features = [self._moves_to_positions(game) for game in self.games['games']]
+
             features = []
             labels = []
 
             # resets every game
             game_increment = 0
 
-            # decrements when Exception is raised
-            number_of_games = len(self.games['games'])
-
             for i, game_dict in enumerate(self.games['games']):
                 data_board = Board.init_default()
-
-                print("On game number {} out of {}".format(i, number_of_games))
 
                 for move in game_dict['moves']:
 
