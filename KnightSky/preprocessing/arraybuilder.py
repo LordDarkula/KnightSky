@@ -176,6 +176,9 @@ class ArrayBuilder:
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.join(ROOT_DIR, 'data'))
     builder.process_files()
-    arrays = builder.convert_to_arrays(split_games=False)
-    print(arrays[0].shape)
-    print(arrays[1].shape)
+    arrays_combined = builder.convert_to_arrays(split_games=False)
+    arrays_split = builder.convert_to_arrays(split_games=True)
+    print(arrays_combined[0].shape)
+    print(arrays_combined[1].shape)
+    print(arrays_split[0].shape)
+    print(arrays_split[1].shape)
