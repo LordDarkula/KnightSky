@@ -73,18 +73,66 @@ class ArrayBuilder:
                     end = line.index('{')
                     processed_line = line[:end].replace('+', '').replace('#', '')
                     processed_line = re.sub(r'[1-9][0-9]*\.\s', '', processed_line)
-                    result = float(0 if '1-0' in line[end:]
-                                   else 1 if '0-1' in line[end:]
-                                   else 0.5)
+                    result = 0 if '1-0' in line[end:] \
+                        else 2 if '0-1' in line[end:] \
+                        else 1
 
                     processed_game = {'result': result,
                                       'moves': processed_line.strip().split(' ')}
                     self.games['games'].append(processed_game)
                     self.games['length'] += 1
 
-    def convert_to_arrays(self, label_type='material'):
+    @staticmethod
+    def _moves_to_positions_and_labels(move_sequence, result):
         """
-        Converts to two arrays, X and y.
+        Converts sequence of moves stored in algebraic notation to array of positions and advantages
+        by playing those moves and recording the state of the board after each move.
+        Board initialized in a default state.
+
+        :param move_sequence: sequence of moves in algebraic notation
+        :type move_sequence: Iterable[str]
+
+        :param result: result of game (0, 1, or 2)
+        :type result: int
+
+        :return: array of 1D board features, 1D array of results of either 0, 1, 2
+        :rtype: np.array
+        """
+        processing_board = Board.init_default()
+        current_color = color.white
+        piece_id = piece_const.PieceValues.init_manual(pawn_value=1,
+                                                       knight_value=2,
+                                                       bishop_value=3,
+                                                       rook_value=4,
+                                                       queen_value=5,
+                                                       king_value=6)
+        positions = np.zeros([len(list(move_sequence)), 64], dtype=np.int)
+        advantages = np.zeros([len(move_sequence)], dtype=np.int)
+        symbols = ''
+
+        for index, algebraic_move_str in enumerate(move_sequence):
+
+            move = converter.incomplete_alg(algebraic_move_str, current_color, processing_board)
+            processing_board.update(move)
+            symbols += move.piece.symbol
+
+            positions[index] = featurehelper.extract_features_from_position(processing_board, piece_id)
+            advantages[index] = result
+
+            current_color = -current_color
+            print(symbols)
+
+        print(processing_board)
+        return positions, advantages
+
+    def convert_to_arrays(self, split_games=False):
+        """
+        Converts json dict of moves in algebraic notation for a set of games to features and labels
+        to feed into a neural network.
+
+        :param split_games: Specify whether to split up features and labels by game.
+        Useful for recurrent neural networks.
+        :type split_games: bool
 
         ``features`` is the list of all chess positions in the form
         [number of games, 64 (number of squares on the board)]
@@ -100,81 +148,38 @@ class ArrayBuilder:
         Saves output in ``data/arrays`` and returns it.
 
         :return: features, labels
-        :rtype: tuple(np.array, np.array)
+        :rtype: tuple[np.array, np.array] or if split_games == True, tuple[list[np.array], list[np.array]]
         """
         with open(self.paths_dict['processed'], 'r') as f:
             self.games = json.load(f)
-            features = []
-            labels = []
-
-            # resets every game
-            game_increment = 0
-
-            # decrements when Exception is raised
             number_of_games = len(self.games['games'])
+            features, labels = [], []
 
-            for i, game_dict in enumerate(self.games['games']):
-                data_board = Board.init_default()
-
-                print("On game number {} out of {}".format(i, number_of_games))
-
-                for move in game_dict['moves']:
-
-                    if game_increment % 2 == 0:
-                        current_color = color.white
-                    else:
-                        current_color = color.black
-                    print("Raw: {}".format(move))
-                    move = converter.incomplete_alg(move, current_color, data_board)
-                    move = converter.make_legal(move, data_board)
-                    data_board.update(move)
-
-                    features.append(featurehelper.extract_features_from_position(data_board))
-
-                    if label_type == 'turn':
-                        if current_color == color.white:  # white has just moved
-                            labels.append([1, 0, 0])
-                        else:                             # black has just moved
-                            labels.append([0, 0, 1])
-
-                    elif label_type == 'result':
-                        if int(game_dict['result']) == 0:    # white wins
-                            labels.append([1, 0, 0])
-                        elif int(game_dict['result']) == 1:  # black wins
-                            labels.append([0, 0, 1])
-                        else:                                # draw
-                            labels.append([0, 1, 0])
-
-                    elif label_type == 'material':
-                        material_imbalance = np.sum(np.array(features[-1]))
-                        if material_imbalance > 0:    # white holds material advantage
-                            labels.append([1, 0, 0])
-                        elif material_imbalance < 0:  # black holds material advantage
-                            labels.append([0, 0, 1])
-                        else:                         # material even
-                            labels.append([0, 1, 0])
-
-                    else:
-                        raise ValueError("label_type {} is invalid "
-                                         "\nlabel_type must be \'turn\', \'result\', or \'material\'"
-                                         .format(label_type))
-
-                    game_increment += 1
-                    print(".", end='')
-
-                game_increment = 0
+            for index, game_dict in enumerate(self.games['games']):
+                print("Game {} of {}".format(index, number_of_games))
+                features_and_labels = self._moves_to_positions_and_labels(game_dict['moves'], game_dict['result'])
+                features.append(features_and_labels[0])
+                labels.append(features_and_labels[1])
                 print()
-                print(data_board)
 
-        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features-{}'.format(label_type)), np.array(features))
-        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'.format(label_type)), np.array(labels))
+            if not split_games:
+                features = np.concatenate(features, axis=0)
+                labels = np.concatenate(labels, axis=0)
 
-        return np.array(features), np.array(labels)
+        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'features-{}'
+                                  .format('split' if split_games else 'combined')), features)
+        np.save(oshelper.pathjoin(self.paths_dict['arrays'], 'labels-{}'
+                                  .format('split' if split_games else 'combined')), labels)
+
+        return features, labels
 
 
 if __name__ == '__main__':
     builder = ArrayBuilder(os.path.join(ROOT_DIR, 'data'))
     builder.process_files()
-    print(builder.convert_to_arrays(label_type='material'))
-    print(builder.convert_to_arrays(label_type='result'))
-    print(builder.convert_to_arrays(label_type='turn'))
+    arrays_combined = builder.convert_to_arrays(split_games=False)
+    arrays_split = builder.convert_to_arrays(split_games=True)
+    print(arrays_combined[0].shape)
+    print(arrays_combined[1].shape)
+    print(len(arrays_split[0]))
+    print(len(arrays_split[1]))
