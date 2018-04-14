@@ -57,10 +57,12 @@ class BoardEvaluator:
         self.model.fit(positions, advantages, batch_size=100, epochs=5)
 
     def save_to_h5(self):
+        """ Saves keras model in current session to hd5 file specified by class variable `SAVE_PATH`. """
         self.model.save(self.SAVE_PATH)
 
     @classmethod
     def load_from_h5(cls):
+        """ Loads previously saved keras model from hd5 file specified by class variable `SAVE_PATH`. """
         try:
             return cls(load_model(cls.SAVE_PATH))
         except ValueError:
