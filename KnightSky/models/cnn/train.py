@@ -12,6 +12,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Flatten, Reshape
 from keras.layers import Conv2D
 from keras.optimizers import Adam
+from keras.models import load_model
 
 from definitions import ROOT_DIR
 from KnightSky.helpers import oshelper
@@ -25,20 +26,24 @@ class BoardEvaluator:
     BOARD_SIZE = 64
     LENGTH = 8
     NUMBER_OF_CLASSES = 3
+    SAVE_PATH = os.path.join(ROOT_DIR, 'tmp', 'model')
 
-    def __init__(self):
-        self.model = Sequential([
-            Reshape(input_shape=(64,), target_shape=(8, 8, 1)),
-            Conv2D(16, (4, 4), activation='relu'),
-            Conv2D(4, (4, 4)),
-            Flatten(),
-            Dense(16, activation='relu'),
-            Dense(3, activation='softmax'),
-        ])
+    def __init__(self, model=None):
+        if model is None:
+            self.model = Sequential([
+                Reshape(input_shape=(64,), target_shape=(8, 8, 1)),
+                Conv2D(16, (4, 4), activation='relu'),
+                Conv2D(4, (4, 4)),
+                Flatten(),
+                Dense(16, activation='relu'),
+                Dense(3, activation='softmax'),
+            ])
 
-        self.model.compile(optimizer=Adam(),
-                           loss='categorical_crossentropy',
-                           metrics=['accuracy'])
+            self.model.compile(optimizer=Adam(),
+                               loss='categorical_crossentropy',
+                               metrics=['accuracy'])
+        else:
+            self.model = model
 
     def fit(self, game_features, game_labels):
         positions = []
@@ -51,9 +56,17 @@ class BoardEvaluator:
 
         self.model.fit(positions, advantages, batch_size=100, epochs=5)
 
+    def save_to_h5(self):
+        self.model.save(self.SAVE_PATH)
+
     @classmethod
-    def from_saved(cls):
-        pass
+    def load_from_h5(cls):
+        try:
+            return cls(load_model(cls.SAVE_PATH))
+        except ValueError:
+            raise ValueError("No model found at {}".format(cls.SAVE_PATH))
+        except ImportError:
+            raise ImportError("h5py not found. Please install dependency (eg. pip install h5py).")
 
 
 if __name__ == '__main__':

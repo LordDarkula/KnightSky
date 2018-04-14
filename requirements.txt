@@ -2,3 +2,4 @@ chess_py
 numpy
 tensorflow
 keras
+h5py
