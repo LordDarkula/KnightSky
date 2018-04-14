@@ -100,16 +100,18 @@ class ArrayBuilder:
         """
         processing_board = Board.init_default()
         current_color = color.white
-        piece_id = piece_const.PieceValues.init_manual(PAWN_VALUE=1,
-                                                       KNIGHT_VALUE=2,
-                                                       BISHOP_VALUE=3,
-                                                       ROOK_VALUE=4,
-                                                       QUEEN_VALUE=5)
+        piece_id = piece_const.PieceValues.init_manual(pawn_value=1,
+                                                       knight_value=2,
+                                                       bishop_value=3,
+                                                       rook_value=4,
+                                                       queen_value=5,
+                                                       king_value=6)
         positions = np.zeros([len(list(move_sequence)), 64], dtype=np.int)
         advantages = np.zeros([len(move_sequence)], dtype=np.int)
         symbols = ''
 
         for index, algebraic_move_str in enumerate(move_sequence):
+
             move = converter.incomplete_alg(algebraic_move_str, current_color, processing_board)
             processing_board.update(move)
             symbols += move.piece.symbol
@@ -117,8 +119,7 @@ class ArrayBuilder:
             positions[index] = featurehelper.extract_features_from_position(processing_board, piece_id)
             advantages[index] = result
 
-            current_color = current_color.opponent()
-
+            current_color = -current_color
             print(symbols)
 
         print(processing_board)
