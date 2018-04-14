@@ -30,9 +30,12 @@ class BoardEvaluator:
         self.model = Sequential([
             Reshape(input_shape=(64,), target_shape=(8, 8, 1)),
             Conv2D(16, (4, 4), activation='relu'),
+            Conv2D(4, (4, 4)),
             Flatten(),
+            Dense(16, activation='relu'),
             Dense(3, activation='softmax'),
         ])
+
         self.model.compile(optimizer=Adam(),
                            loss='categorical_crossentropy',
                            metrics=['accuracy'])
@@ -62,7 +65,9 @@ if __name__ == '__main__':
 
     features = np.load(os.path.join(data_path, 'arrays', 'features-combined.npy'))
     labels = np.load(oshelper.pathjoin(data_path, 'arrays', 'labels-combined.npy'))
-    print(2 in labels)
+    print(np.sum(labels == 0))
+    print(np.sum(labels == 1))
+    print(np.sum(labels == 2))
     labels = to_categorical(labels, num_classes=3)
     wc = 0
     dc = 0
@@ -82,7 +87,7 @@ if __name__ == '__main__':
     train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
 
     evaluator = BoardEvaluator()
-    evaluator.model.fit(train_features, train_labels, batch_size=32, epochs=2)
+    evaluator.model.fit(train_features, train_labels, batch_size=32, epochs=500)
     print(evaluator.model.evaluate(test_features, test_labels))
     print(np.array(test_labels[2]))
-    print(evaluator.model.predict(np.array(test_features[2])))
+    print(evaluator.model.predict(np.array(test_features)))
