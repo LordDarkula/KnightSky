@@ -6,17 +6,19 @@ Constructs convolutional neural network
 
 import os
 import numpy as np
+from chess_py import *
 
 from keras.utils import to_categorical
+from keras.preprocessing import sequence
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Reshape
-from keras.layers import Conv2D
+from keras.layers import ConvLSTM2D, LSTM, Conv2D
 from keras.optimizers import Adam
 from keras.models import load_model
 
 from definitions import ROOT_DIR
 from KnightSky.helpers import oshelper
-from KnightSky.preprocessing import split
+from KnightSky.preprocessing.helpers import featurehelper
 
 
 class BoardEvaluator:
@@ -31,16 +33,17 @@ class BoardEvaluator:
     def __init__(self, model=None):
         if model is None:
             self.model = Sequential([
-                Reshape(input_shape=(64,), target_shape=(8, 8, 1)),
-                Conv2D(16, (4, 4), activation='relu'),
-                Conv2D(4, (4, 4)),
-                Flatten(),
-                Dense(16, activation='relu'),
-                Dense(3, activation='softmax'),
+                LSTM(3, return_sequences=True, input_shape=(332, 64), use_bias=True, activation='softmax'),
             ])
+            # self.model = Sequential([
+            #     Reshape(input_shape=(332, 64), target_shape=(332, 8, 8, 1)),  # Channels last
+            #     ConvLSTM2D(64, (4, 4), padding='valid', return_sequences=True),
+            #     ConvLSTM2D(3, (2, 2), padding='valid', return_sequences=True),
+            #     Reshape(target_shape=(332, 3)),
+            # ])
 
-            self.model.compile(optimizer=Adam(),
-                               loss='categorical_crossentropy',
+            self.model.compile(optimizer='rmsprop',
+                               loss='mean_squared_error',
                                metrics=['accuracy'])
         else:
             self.model = model
@@ -76,31 +79,37 @@ if __name__ == '__main__':
     tmp_folder_path = os.path.join(ROOT_DIR, 'tmp')
     data_path = os.path.join(ROOT_DIR, 'data')
 
-    features = np.load(os.path.join(data_path, 'arrays', 'features-combined.npy'))
-    labels = np.load(oshelper.pathjoin(data_path, 'arrays', 'labels-combined.npy'))
-    print(np.sum(labels == 0))
-    print(np.sum(labels == 1))
-    print(np.sum(labels == 2))
-    labels = to_categorical(labels, num_classes=3)
-    wc = 0
-    dc = 0
-    bc = 0
-    # for label in labels:
-    #     if label[0] == 1:
-    #         print('white')
-    #         wc += 1
-    #     elif label[1] == 1:
-    #         print('draw')
-    #         dc += 1
-    #     elif label[2] == 1:
-    #         print('black')
-    #         bc += 1
+    features = np.load(os.path.join(data_path, 'arrays', 'features-split.npy'))
+    labels = np.load(oshelper.pathjoin(data_path, 'arrays', 'labels-split.npy'))
+    labels = [to_categorical(l, num_classes=3) for l in labels]
 
-    print("White wins {} draw {} black wins {}".format(wc, dc, bc))
-    train_features, test_features, train_labels, test_labels = split.randomly_assign_train_test(features, labels)
+    piece_id = piece_const.PieceValues.init_manual(pawn_value=1,
+                                                   knight_value=2,
+                                                   bishop_value=3,
+                                                   rook_value=4,
+                                                   queen_value=5,
+                                                   king_value=6)
+    padding_board = featurehelper.extract_features_from_position(Board.init_default(), piece_id)
+    features = sequence.pad_sequences(features, padding='pre', value=padding_board)
+    labels = sequence.pad_sequences(labels, padding='pre', value=[0, 1, 0])
+
+    print(features[1].shape)
+
+    feature_index = int(0.9*len(features))
+    label_index = int(0.9*len(labels))
+    train_features, test_features, train_labels, test_labels = \
+        features[:feature_index], features[feature_index:], \
+        labels[:label_index], labels[label_index:]
+    print("Train {} {} {} Test {} {} {}".format(np.sum(train_labels == [1, 0, 0]),
+                                                np.sum(train_labels == [0, 1, 0]),
+                                                np.sum(train_labels == [1, 0, 0]),
+                                                np.sum(test_labels == [1, 0, 0]),
+                                                np.sum(test_labels == [0, 1, 0]),
+                                                np.sum(test_labels == [1, 0, 0]),
+                                                ))
 
     evaluator = BoardEvaluator()
-    evaluator.model.fit(train_features, train_labels, batch_size=32, epochs=500)
+    evaluator.model.fit(train_features, train_labels, batch_size=10, epochs=2)
     print(evaluator.model.evaluate(test_features, test_labels))
     print(np.array(test_labels[2]))
-    print(evaluator.model.predict(np.array(test_features)))
+    print(evaluator.model.predict(test_features).shape)
