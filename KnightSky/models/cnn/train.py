@@ -33,7 +33,7 @@ class BoardEvaluator:
     def __init__(self, model=None):
         if model is None:
             self.model = Sequential([
-                LSTM(3, return_sequences=True, input_shape=(332, 64), use_bias=True, activation='softmax'),
+                LSTM(3, return_sequences=True, input_shape=(40, 64), use_bias=True, activation='softmax'),
             ])
             # self.model = Sequential([
             #     Reshape(input_shape=(332, 64), target_shape=(332, 8, 8, 1)),  # Channels last
@@ -90,8 +90,8 @@ if __name__ == '__main__':
                                                    queen_value=5,
                                                    king_value=6)
     padding_board = featurehelper.extract_features_from_position(Board.init_default(), piece_id)
-    features = sequence.pad_sequences(features, padding='pre', value=padding_board)
-    labels = sequence.pad_sequences(labels, padding='pre', value=[0, 1, 0])
+    features = sequence.pad_sequences(features, padding='post', maxlen=40)
+    labels = sequence.pad_sequences(labels, padding='post', maxlen=40)
 
     print(features[1].shape)
 
